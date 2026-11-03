@@ -9,20 +9,51 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Rubik+Bubbles&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
 <div id="app"></div>
-<script src="src/config.js"></script>
-<script src="src/data/puzzles.js"></script>
-<script src="src/core/chess.js"></script>
-<script src="src/core/puzzle-source.js"></script>
-<script src="src/ui/texts.js"></script>
-<script src="src/ui/visuals.js"></script>
-<script src="src/ui/board.js"></script>
-<script src="src/game/puzzle-controller.js"></script>
-<script src="src/game/progress.js"></script>
-<script src="src/app/screens.js"></script>
-<script src="src/app/main.js"></script>
+<script>
+  /* VERSION — поднимать при каждом изменении файлов в src/: новый номер = новые адреса,
+     и браузер не возьмёт старые скрипты из кеша. Порядок FILES важен. */
+  const VERSION = '6';
+  const FILES = [
+    'styles.css',
+    'config.js',
+    'data/puzzles.js',
+    'core/chess.js',
+    'core/puzzle-source.js',
+    'ui/texts.js',
+    'ui/visuals.js',
+    'ui/board.js',
+    'game/puzzle-controller.js',
+    'game/progress.js',
+    'app/screens.js',
+    'app/main.js'
+  ];
+  for (const f of FILES) document.write(f.endsWith('.css')
+    ? `<link rel="stylesheet" href="src/${f}?v=${VERSION}">`
+    : `<script src="src/${f}?v=${VERSION}"><\/script>`);
+</script>
+<script>
+  /* Self-update: re-read this index.html bypassing the cache and compare VERSION.
+     If the server has a newer one, reload at a new address (?v=…) so the stale
+     cached page is skipped. Checked on load and whenever the tab comes back to the
+     foreground; never in the middle of a puzzle. One attempt per version (no loops). */
+  (function () {
+    function check() {
+      if (location.protocol === 'file:') return;   // opened from disk: nothing to compare with
+      fetch(location.pathname, { cache: 'no-store' }).then(r => (r.ok ? r.text() : '')).then(t => {
+        const m = /const VERSION = '([^']+)'/.exec(t), fresh = m && m[1];
+        if (!fresh || fresh === VERSION) return;
+        if (window.App && App.debug && App.debug().screen === 'play') return;   // try again later
+        try { if (sessionStorage.getItem('reloadedTo') === fresh) return; sessionStorage.setItem('reloadedTo', fresh); } catch (e) { /* ignore */ }
+        const u = new URL(location.href); u.searchParams.set('v', fresh);
+        location.replace(u.toString());
+      }).catch(() => {});
+    }
+    window.addEventListener('load', check);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+  })();
+</script>
 </body>
 </html>
