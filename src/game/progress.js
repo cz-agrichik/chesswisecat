@@ -1,36 +1,63 @@
-/* game/progress.js — players and their progress: points, best stars per puzzle,
-   which puzzles were attempted, endless levels. Saved in localStorage and, when the
-   page runs as a claude.ai artifact, synced through the artifact database. */
+/* game/progress.js — players and their progress: Elo rating, points, lessons,
+   best result per puzzle. Players are keyed by a stable id (name and avatar can be
+   edited). Saved in localStorage and, when the page runs as a claude.ai artifact,
+   synced through the artifact database. */
 const Progress = (function () {
   const AVATARS = ['🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐰', '🐨', '🦄', '🐙', '🐧'];
   const AVNAMES = ['Лисёнок', 'Медвежонок', 'Панда', 'Тигрёнок', 'Львёнок', 'Лягушонок', 'Обезьянка', 'Зайчик', 'Коала', 'Единорог', 'Осьминожка', 'Пингвин'];
+  const SCHEMA = 2;
+  const NAME_MAX = 14;
   const S = { players: [], currentId: null, muted: !CONFIG.soundOnByDefault };
   const listeners = new Set();
   const changed = () => listeners.forEach(fn => fn());
 
-  /* ---------- players ---------- */
-  function sanitize(id, v) {
-    if (!v || typeof v !== 'object' || typeof id !== 'string' || !/^[\w.~:@+-]{1,60}$/.test(id)) return null;
-    const n = x => (Number.isFinite(+x) && +x >= 0 ? Math.floor(+x) : 0);
-    const map = (o, cap) => { const r = {}; if (o && typeof o === 'object') for (const k of Object.keys(o).slice(0, 50000)) { const x = Math.min(cap, n(o[k])); if (x > 0) r[String(k).slice(0, 40)] = x; } return r; };
+  /* ---------- player records ---------- */
+  const int = (x, min = 0) => (Number.isFinite(+x) ? Math.max(min, Math.round(+x)) : min);
+  const cleanName = s => String(s || '').trim().slice(0, NAME_MAX);
+
+  function fresh(id, name, avatar, now = Date.now()) {
     return {
-      id, name: String(v.name || 'Игрок').slice(0, 20), avatar: AVATARS.includes(v.avatar) ? v.avatar : AVATARS[0],
-      points: n(v.points), stars: map(v.stars, 3), seen: map(v.seen, 1), solved: n(v.solved), bestStreak: n(v.bestStreak),
-      createdAt: n(v.createdAt), updatedAt: n(v.updatedAt),
+      id, v: SCHEMA, name: cleanName(name) || 'Игрок', avatar: AVATARS.includes(avatar) ? avatar : AVATARS[0],
+      rating: CONFIG.rating.start, bestRating: CONFIG.rating.start,
+      points: 0, played: 0, clean: 0, best: {}, recent: [], lesson: null, lessonsDone: 0,
+      createdAt: now, updatedAt: now,
     };
   }
-  const toCloud = p => ({ name: p.name, avatar: p.avatar, points: p.points, stars: p.stars, seen: p.seen, solved: p.solved, bestStreak: p.bestStreak, createdAt: p.createdAt, updatedAt: p.updatedAt });
+
+  /** Validate a stored/remote record. Old-schema records keep only id, name and avatar. */
+  function sanitize(id, v) {
+    if (!v || typeof v !== 'object' || typeof id !== 'string' || !/^[\w.~:@+-]{1,60}$/.test(id)) return null;
+    const p = fresh(id, v.name, v.avatar, int(v.createdAt));
+    p.updatedAt = int(v.updatedAt);
+    if (v.v !== SCHEMA) return p;
+    p.rating = int(v.rating, CONFIG.rating.floor);
+    p.bestRating = Math.max(p.rating, int(v.bestRating));
+    p.points = int(v.points); p.played = int(v.played); p.clean = int(v.clean); p.lessonsDone = int(v.lessonsDone);
+    if (v.best && typeof v.best === 'object') {
+      for (const k of Object.keys(v.best).slice(0, 50000)) p.best[String(k).slice(0, 40)] = Math.min(CONFIG.points.clean, int(v.best[k]));
+    }
+    if (Array.isArray(v.recent)) p.recent = v.recent.filter(x => typeof x === 'string').map(x => x.slice(0, 40)).slice(0, 50);
+    const L = v.lesson;
+    if (L && typeof L === 'object') p.lesson = { num: int(L.num, 1), pts: int(L.pts), n: int(L.n), clean: int(L.clean), r0: int(L.r0) };
+    return p;
+  }
+  const toCloud = p => { const o = Object.assign({}, p); delete o.synced; delete o.id; return o; };
 
   function load() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(CONFIG.storageKey) || 'null');
-      if (raw && typeof raw === 'object') {
-        if (Array.isArray(raw.players)) S.players = raw.players.map(p => { const v = sanitize(p && p.id, p); if (v) v.synced = !!p.synced; return v; }).filter(Boolean);
-        S.currentId = raw.currentId || null;
-        if (typeof raw.muted === 'boolean') S.muted = raw.muted;
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(CONFIG.storageKey) || 'null'); } catch (e) { /* storage unavailable */ }
+    if (!raw) {   // first run of this version: carry over names and avatars
+      for (const k of CONFIG.legacyStorageKeys || []) {
+        try { raw = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { raw = null; }
+        if (raw) break;
       }
-    } catch (e) { /* storage unavailable */ }
-    ensureCurrent();
+    }
+    if (raw && typeof raw === 'object') {
+      if (Array.isArray(raw.players)) S.players = raw.players.map(p => { const v = sanitize(p && p.id, p); if (v) v.synced = !!p.synced && p.v === SCHEMA; return v; }).filter(Boolean);
+      S.currentId = raw.currentId || null;
+      if (typeof raw.muted === 'boolean') S.muted = raw.muted;
+    }
+    ensureCurrent(); save();
   }
   function save() {
     try { localStorage.setItem(CONFIG.storageKey, JSON.stringify({ players: S.players, currentId: S.currentId, muted: S.muted })); } catch (e) { /* ignore */ }
@@ -39,65 +66,70 @@ const Progress = (function () {
   const current = () => S.players.find(p => p.id === S.currentId) || null;
   function setCurrent(id) { S.currentId = id; save(); }
   function addPlayer(name, avatarIdx) {
-    const now = Date.now();
-    const p = { id: 'p' + now.toString(36) + Math.random().toString(36).slice(2, 7), name: (name || '').trim().slice(0, 14) || AVNAMES[avatarIdx], avatar: AVATARS[avatarIdx] || AVATARS[0], points: 0, stars: {}, seen: {}, solved: 0, bestStreak: 0, createdAt: now, updatedAt: now, synced: false };
+    const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const p = fresh(id, cleanName(name) || AVNAMES[avatarIdx], AVATARS[avatarIdx]);
+    p.synced = false;
     S.players.push(p); S.currentId = p.id; save(); queuePush(p, 50);
+    return p;
+  }
+  /** Rename / change avatar. Progress stays attached to the id. */
+  function updatePlayer(id, { name, avatarIdx }) {
+    const p = S.players.find(x => x.id === id); if (!p) return null;
+    if (name !== undefined) p.name = cleanName(name) || p.name;
+    if (avatarIdx !== undefined && AVATARS[avatarIdx]) p.avatar = AVATARS[avatarIdx];
+    touch(p);
     return p;
   }
   function touch(p) { p.updatedAt = Date.now(); p.synced = false; save(); queuePush(p); }
   function setMuted(v) { S.muted = !!v; save(); }
 
-  /* ---------- scoring ---------- */
-  /** Record one finished puzzle. Returns points gained and level change. */
-  function record(p, puzzle, result, streak) {
-    const before = levelOf(p.points);
-    const hadStars = p.stars[puzzle.id] || 0;
-    let pts = 0, bonus = 0;
-    if (result.solved) {
-      const base = result.stars * CONFIG.pointsPerStar(puzzle.rating);
-      const improved = result.stars > hadStars;
-      pts = Math.round(hadStars && !improved ? base * CONFIG.replayFactor : base);
-      bonus = CONFIG.streakBonus(streak);
-      p.solved++;
-      p.stars[puzzle.id] = Math.max(hadStars, result.stars);
-      p.bestStreak = Math.max(p.bestStreak, streak);
+  /* ---------- rating, points, lessons ---------- */
+  /** Expected score of the player against a puzzle (Elo). */
+  const expected = (r, puzzleRating) => 1 / (1 + Math.pow(10, (puzzleRating - r) / 400));
+
+  /** Points for a finished puzzle: { mistakes, hints, guided } → 2 / 1 / 0. A hint counts as a mistake. */
+  function pointsFor(result) {
+    const P = CONFIG.points;
+    return result.guided ? P.shown : result.mistakes || result.hints ? P.withMistakes : P.clean;
+  }
+
+  function lessonOf(p) {
+    if (!p.lesson) p.lesson = { num: p.lessonsDone + 1, pts: 0, n: 0, clean: 0, r0: p.rating };
+    return p.lesson;
+  }
+
+  /** Record one finished puzzle. Returns what changed, for the screens to show. */
+  function record(p, puzzle, result) {
+    const L = lessonOf(p);   // opened before the rating changes, so r0 is the rating at the lesson start
+    const pts = pointsFor(result), win = pts === CONFIG.points.clean && !result.guided && !result.mistakes && !result.hints;
+    const R = CONFIG.rating, before = p.rating;
+    const pr = puzzle.rating || p.rating;
+    p.rating = Math.max(R.floor, Math.round(p.rating + R.k * ((win ? 1 : 0) - expected(p.rating, pr))));
+    p.bestRating = Math.max(p.bestRating, p.rating);
+    p.points += pts; p.played++; if (win) p.clean++;
+    const had = p.best[puzzle.id];
+    p.best[puzzle.id] = had === undefined ? pts : Math.max(had, pts);
+    p.recent = [puzzle.id].concat(p.recent.filter(x => x !== puzzle.id)).slice(0, 40);
+
+    L.pts += pts; L.n++; if (win) L.clean++;
+    let lessonDone = null;
+    if (L.pts >= CONFIG.lessonGoal) {
+      lessonDone = Object.assign({}, L, { pts: Math.min(L.pts, CONFIG.lessonGoal), r1: p.rating });
+      p.lessonsDone++; p.lesson = null;
     }
-    p.seen[puzzle.id] = 1;
-    p.points += pts + bonus;
     touch(p);
-    const after = levelOf(p.points);
-    return { points: pts + bonus, bonus, levelUp: after.level > before.level ? after : null };
+    return { points: pts, win, rating: p.rating, delta: p.rating - before, lesson: lessonDone || Object.assign({}, L), lessonDone };
   }
 
-  function levelOf(points) {
-    let level = 1, floor = 0;
-    while (points >= floor + CONFIG.levelNeed(level)) { floor += CONFIG.levelNeed(level); level++; }
-    const need = CONFIG.levelNeed(level), into = points - floor;
-    const t = CONFIG.levelTitles, title = level <= t.length ? t[level - 1] : `${t[t.length - 1]} ${level - t.length + 1}`;
-    return { level, title, into, need, left: need - into, pct: Math.round(into / need * 100) };
-  }
-
-  function packStats(p, pack) {
-    let stars = 0, seen = 0, solved = 0;
-    for (const z of pack.puzzles) { const s = (p && p.stars[z.id]) || 0; stars += s; if (s) solved++; if (p && p.seen[z.id]) seen++; }
-    const n = pack.puzzles.length;
-    return { stars, max: n * 3, seen, solved, n, complete: seen >= n, perfect: stars >= n * 3 };
-  }
-
-  /** Where "Решать" should take the child: first unattempted puzzle, else the weakest pack. */
-  function nextTarget(p, packs) {
-    if (!packs.length) return null;
-    for (const pack of packs) {
-      const i = pack.puzzles.findIndex(z => !(p && p.seen[z.id]));
-      if (i >= 0) return { pack, index: i, mode: 'continue' };
+  /** Ticks for a volume: how many puzzles were met / solved / solved cleanly. */
+  function volumeStats(p, vol) {
+    let seen = 0, solved = 0, clean = 0;
+    for (const z of vol.puzzles) {
+      const b = p ? p.best[z.id] : undefined;
+      if (b === undefined) continue;
+      seen++; if (b >= CONFIG.points.withMistakes) solved++; if (b >= CONFIG.points.clean) clean++;
     }
-    let best = null;
-    for (const pack of packs) {
-      const st = packStats(p, pack), ratio = st.stars / st.max;
-      if (!best || ratio < best.ratio) best = { pack, ratio };
-    }
-    const i = best.pack.puzzles.findIndex(z => ((p && p.stars[z.id]) || 0) < 3);
-    return { pack: best.pack, index: Math.max(0, i), mode: best.ratio >= 1 ? 'again' : 'replay' };
+    return { n: vol.puzzles.length, seen, solved, clean };
   }
 
   /* ---------- cloud sync (claude.ai artifact database) ---------- */
@@ -136,7 +168,7 @@ const Progress = (function () {
     }
     if (dirty) { ensureCurrent(); save(); changed(); }
   }
-  const busyIds = new Set();   // players currently mid-pack: don't overwrite them from remote
+  const busyIds = new Set();   // players currently solving: don't overwrite them from remote
   function queuePush(p, delay = 900) {
     if (!DB || !writable || !p) return;
     pending.add(p.id); clearTimeout(timers.get(p.id));
@@ -160,9 +192,8 @@ const Progress = (function () {
   }
 
   return {
-    AVATARS, AVNAMES, state: S, load, save, current, setCurrent, addPlayer, setMuted,
-    record, levelOf, packStats, nextTarget, initCloud,
+    AVATARS, AVNAMES, NAME_MAX, state: S, load, save, current, setCurrent, addPlayer, updatePlayer, setMuted,
+    record, pointsFor, expected, lessonOf, volumeStats, initCloud,
     onChange: fn => listeners.add(fn), markBusy: (id, on) => (on ? busyIds.add(id) : busyIds.delete(id)),
-    totalStars: p => Object.values((p && p.stars) || {}).reduce((a, b) => a + b, 0),
   };
 })();

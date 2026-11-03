@@ -1,6 +1,7 @@
-/* core/puzzle-source.js — turns raw puzzle data into packs.
-   This is the single place to swap in a smarter selection algorithm later:
-   the rest of the app only calls PuzzleSource.getPacks() / getPack(id). */
+/* core/puzzle-source.js — turns raw puzzle data into volumes (books on the shelf)
+   and decides which puzzle comes next. This is the single place to swap in a
+   smarter selection algorithm later: the rest of the app only calls
+   PuzzleSource.getVolumes() / getVolume(id) / pickNext(volume, player). */
 const PuzzleSource = (function () {
   function splitCSV(line) {
     if (line.indexOf('"') < 0) return line.split(',');
@@ -14,7 +15,7 @@ const PuzzleSource = (function () {
   }
 
   function parseCSV(text) {
-    const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
+    const lines = String(text).replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
     if (!lines.length) return [];
     let col = { id: 0, fen: 1, moves: 2, rating: 3, themes: 7, url: 8 };
     if (/fen/i.test(lines[0]) && /moves/i.test(lines[0])) {
@@ -43,23 +44,17 @@ const PuzzleSource = (function () {
     } catch (e) { return false; }
   }
 
-  function buildPacks(puzzles) {
-    if (Array.isArray(PACKS_OVERRIDE) && PACKS_OVERRIDE.length) {
-      const byId = new Map(puzzles.map(p => [p.id, p]));
-      return PACKS_OVERRIDE.map((def, i) => ({
-        id: 'pack-' + (i + 1), index: i, title: def.title || `Пакет ${i + 1}`,
-        puzzles: (def.ids || []).map(id => byId.get(id)).filter(Boolean),
-      })).filter(pk => pk.puzzles.length);
-    }
-    const packs = [];
-    for (let i = 0; i * CONFIG.packSize < puzzles.length; i++) {
-      packs.push({ id: 'pack-' + (i + 1), index: i, title: `Пакет ${i + 1}`, puzzles: puzzles.slice(i * CONFIG.packSize, (i + 1) * CONFIG.packSize) });
-    }
-    return packs;
+  function buildVolumes(puzzles) {
+    const defs = Array.isArray(VOLUMES) && VOLUMES.length ? VOLUMES : [{ id: 'all', title: 'Задачи', ids: null }];
+    const byId = new Map(puzzles.map(p => [p.id, p]));
+    return defs.map((def, i) => ({
+      id: def.id || 'vol-' + (i + 1), index: i, title: def.title || `Том ${i + 1}`, short: def.short || def.title || `Том ${i + 1}`,
+      puzzles: Array.isArray(def.ids) ? def.ids.map(id => byId.get(id)).filter(Boolean) : puzzles.slice(),
+    })).filter(v => v.puzzles.length);
   }
 
   let cache = null;
-  function getPacks() {
+  function getVolumes() {
     if (cache) return cache;
     const seen = new Set(), all = [];
     for (const p of parseCSV(PUZZLES_CSV)) {
@@ -67,10 +62,27 @@ const PuzzleSource = (function () {
       if (!isValid(p)) { console.warn('Puzzle skipped (invalid):', p.id); continue; }
       seen.add(p.id); all.push(p);
     }
-    cache = buildPacks(all);
+    cache = buildVolumes(all);
     return cache;
   }
-  const getPack = id => getPacks().find(p => p.id === id) || null;
+  const getVolume = id => getVolumes().find(v => v.id === id) || null;
 
-  return { getPacks, getPack, parseCSV, isValid };
+  /** Next puzzle for this player from the volume. Current rule:
+      1) never-seen puzzles first, at random;
+      2) then puzzles not yet solved cleanly;
+      3) then anything — always skipping the last CONFIG.avoidRecent ones when possible. */
+  function pickNext(vol, player) {
+    const all = vol.puzzles; if (!all.length) return null;
+    const best = (player && player.best) || {};
+    const recent = new Set(((player && player.recent) || []).slice(0, Math.min(CONFIG.avoidRecent, all.length - 1)));
+    const pool = all.filter(z => !recent.has(z.id));
+    const rnd = a => a[Math.floor(Math.random() * a.length)];
+    const unseen = pool.filter(z => best[z.id] === undefined);
+    if (unseen.length) return rnd(unseen);
+    const weak = pool.filter(z => best[z.id] < CONFIG.points.clean);
+    if (weak.length) return rnd(weak);
+    return rnd(pool.length ? pool : all);
+  }
+
+  return { getVolumes, getVolume, pickNext, parseCSV, isValid };
 })();

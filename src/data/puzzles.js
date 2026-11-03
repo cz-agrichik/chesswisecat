@@ -1,8 +1,7 @@
 /* data/puzzles.js — puzzle data, Lichess CSV format, pasted as is.
    Current set: tasks_backrank600.csv (back-rank mates, rating up to 600).
-   Order matters: packs are filled in this order (see core/puzzle-source.js).
-   To group puzzles explicitly, fill PACKS_OVERRIDE, e.g.
-   [{ title: 'Пакет 1', ids: ['hUjQL', 'KObot'] }] — then packSize is ignored. */
+   VOLUMES (bottom of the file) puts puzzles into books on the shelf:
+   ids: null means "every puzzle from the CSV"; otherwise list puzzle ids. */
 const PUZZLES_CSV = `PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl
 hUjQL,3r2k1/1q3ppp/p3p3/PpR1P3/3Q4/6P1/5P1P/2R3K1 b - - 0 29,d8d4 c5c8 b7c8 c1c8 d4d8 c8d8,587,85,100,94,backRankMate endgame long mate mateIn3 queenRookEndgame,https://lichess.org/hQL2vxZy/black#58
 KObot,2r3k1/p1r4p/1p4p1/5p2/3Nb3/Q7/PP5P/1KB2R2 w - - 4 42,b1a1 c7c1 f1c1 c8c1,540,86,100,153,backRankMate mate mateIn2 middlegame short,https://lichess.org/UGv1Xj5I#83
@@ -205,4 +204,6 @@ IWqzt,3N4/p3R3/6pk/7p/2Bp4/1P6/P1r3PP/7K w - - 4 37,e7a7 c2c1 c4f1 c1f1,566,86,1
 alayL,r4k1r/p4ppp/2p2q2/1p2R3/1B1N4/3K4/PP3PPP/4R3 b - - 3 19,f8g8 e5e8 a8e8 e1e8,482,110,87,671,backRankMate mate mateIn2 middlegame short,https://lichess.org/HnvHF1Xh/black#38
 3IT4e,4r3/7p/5k2/5p2/1RP3p1/5N2/6PP/7K w - - 0 35,f3d2 e8e1 d2f1 e1f1,561,114,81,217,backRankMate endgame mate mateIn2 short,https://lichess.org/o9O9LNXY#69`;
 
-const PACKS_OVERRIDE = null;
+const VOLUMES = [
+  { id: 'backrank', title: 'Маты на последней горизонтали', short: 'Последняя горизонталь', ids: null },
+];

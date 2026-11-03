@@ -1,18 +1,26 @@
 /* config.js — all hardcoded settings live here. */
 const CONFIG = {
-  // How many puzzles go into one pack when packs are built from the flat list.
-  packSize: 20,
-  // Wrong moves allowed before the correct solution is shown.
+  appName: 'Учёный Кот-Шахматист',
+
+  // Tries per puzzle. Mistakes 1..(tries-1) are forgiven (1 point); the last one
+  // turns on arrows: the child plays the correct line along them and gets 0 points.
   triesBeforeAnswer: 3,
-  // Points per star; harder puzzles (higher Lichess rating) give more.
-  pointsPerStar: rating => Math.max(10, Math.round(rating / 50)),
-  // Replaying a puzzle that was already solved earns this share of points.
-  replayFactor: 0.5,
-  // Bonus for consecutive solves without seeing the answer.
-  streakBonus: streak => (streak >= 2 ? Math.min(20, 5 * (streak - 1)) : 0),
-  // Endless levels: points needed to go from level n to n + 1.
-  levelNeed: n => 300 + 150 * (n - 1),
-  levelTitles: ['Котёнок', 'Ученик', 'Знаток', 'Мастер', 'Профессор', 'Академик'],
+
+  // Points for one puzzle: clean solve / solved with mistakes / played along the arrows.
+  points: { clean: 2, withMistakes: 1, shown: 0 },
+
+  // One lesson = collect this many points, then the next lesson starts. Endless.
+  lessonGoal: 40,
+
+  // Elo rating. A clean solve is a win against the puzzle's Lichess rating,
+  // anything else is a loss. k = 20 gives ±10 against a puzzle of equal rating.
+  rating: { start: 100, k: 20, floor: 0 },
+
+  // Puzzle picking inside a volume (core/puzzle-source.js):
+  // don't repeat any of the last N puzzles while there is a choice.
+  avoidRecent: 15,
+
   soundOnByDefault: true,
-  storageKey: 'shakhmatyata.v2',
+  storageKey: 'chesswisecat.v1',
+  legacyStorageKeys: ['shakhmatyata.v2'],   // names and avatars are carried over from these
 };
