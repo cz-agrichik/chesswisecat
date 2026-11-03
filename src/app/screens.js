@@ -29,7 +29,7 @@ const App = (function () {
   function refresh() { if (screen !== 'play' && !document.querySelector('.modal-bd')) render(); }
 
   const lessonView = pl => pl.lesson || { num: pl.lessonsDone + 1, pts: 0, n: 0, clean: 0 };
-  const firstVolume = () => PuzzleSource.getVolumes()[0] || null;
+  const firstVolume = () => (PuzzleSource.getVolumes().length ? PuzzleSource.getMixed() : null);
 
   /* ---------- top bar ---------- */
   function topbar() {
@@ -81,14 +81,16 @@ const App = (function () {
     const body = el.querySelector('.bc-body');
     const width = Math.min(560, document.documentElement.clientWidth - 32) - 36;
     const perShelf = Math.max(2, Math.min(5, Math.floor((width + 10) / 96)));
-    const items = vols.map((v, i) => bookEl(v, i, pl)).concat([h(`<div class="book soon" aria-label="Скоро новый том"><span class="book-num">…</span><span class="book-cap">скоро</span></div>`)]);
+    // the "soon" slot and the plant only go where there is room: never a shelf of their own
+    const items = vols.map((v, i) => bookEl(v, i, pl));
+    if (items.length % perShelf !== 0) items.push(h(`<div class="book soon" aria-label="Скоро новая книга"><span class="book-num">…</span><span class="book-cap">скоро</span></div>`));
     for (let i = 0; i < items.length; i += perShelf) {
       const shelf = h('<div class="shelf"></div>');
       items.slice(i, i + perShelf).forEach(b => shelf.append(b));
       body.append(shelf);
     }
-    const firstShelf = body.querySelector('.shelf');
-    if (firstShelf) firstShelf.append(h('<span class="deco" aria-hidden="true">🪴</span>'));
+    const last = body.lastElementChild;
+    if (last && last.children.length < perShelf) last.append(h('<span class="deco" aria-hidden="true">🪴</span>'));
     return el;
   }
   function bookEl(vol, i, pl) {
@@ -127,7 +129,7 @@ const App = (function () {
       grid.append(c);
     });
     const sb = el.querySelector('[data-start]');
-    sb.textContent = L.pts ? `Продолжить урок ${L.num} (${L.pts} из ${GOAL})` : `Решать: урок ${L.num}`;
+    sb.textContent = `Решать задачи из этой книги`;
     sb.onclick = () => { UI.sound.unlock(); startLesson(vol); };
     return el;
   }

@@ -380,9 +380,9 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 .vgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
 .vc { display: inline-grid; place-items: center; aspect-ratio: 1; min-width: 0; border-radius: 6px; font-size: .62rem; font-style: normal; font-weight: 800; letter-spacing: -1px;
   background: var(--paper-2); border: 2px solid var(--grey); color: #23264A; }
-.vc.c2 { background: var(--sun); border-color: var(--ink); }
-.vc.c1 { background: var(--sun-soft); border-color: var(--ink); }
-.vc.c0 { background: var(--lav); border-color: var(--ink); font-size: .6rem; }
+.vc.c2 { background: var(--meadow); border-color: var(--ink); color: #12301D; }
+.vc.c1 { background: var(--sun); border-color: var(--ink); }
+.vc.c0 { background: #FF9AAE; border-color: var(--ink); font-size: .6rem; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-weight: 700; font-size: .85rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend .vc { width: 22px; }

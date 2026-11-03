@@ -1,7 +1,7 @@
 /* core/puzzle-source.js — turns raw puzzle data into volumes (books on the shelf)
    and decides which puzzle comes next. This is the single place to swap in a
    smarter selection algorithm later: the rest of the app only calls
-   PuzzleSource.getVolumes() / getVolume(id) / pickNext(volume, player). */
+   PuzzleSource.getVolumes() / getVolume(id) / getMixed() / pickNext(volume, player). */
 const PuzzleSource = (function () {
   function splitCSV(line) {
     if (line.indexOf('"') < 0) return line.split(',');
@@ -44,28 +44,35 @@ const PuzzleSource = (function () {
     } catch (e) { return false; }
   }
 
-  function buildVolumes(puzzles) {
-    const defs = Array.isArray(VOLUMES) && VOLUMES.length ? VOLUMES : [{ id: 'all', title: 'Задачи', ids: null }];
-    const byId = new Map(puzzles.map(p => [p.id, p]));
-    return defs.map((def, i) => ({
-      id: def.id || 'vol-' + (i + 1), index: i, title: def.title || `Том ${i + 1}`, short: def.short || def.title || `Том ${i + 1}`,
-      puzzles: Array.isArray(def.ids) ? def.ids.map(id => byId.get(id)).filter(Boolean) : puzzles.slice(),
-    })).filter(v => v.puzzles.length);
+  function parseBook(csv, volId) {
+    const seen = new Set(), out = [];
+    for (const p of parseCSV(csv)) {
+      if (seen.has(p.id)) continue;
+      if (!isValid(p)) { console.warn('Puzzle skipped (invalid):', volId, p.id); continue; }
+      seen.add(p.id); p.vol = volId; out.push(p);
+    }
+    return out;
   }
 
-  let cache = null;
+  let cache = null, mixed = null;
+  /** Books on the shelf, in order. */
   function getVolumes() {
     if (cache) return cache;
-    const seen = new Set(), all = [];
-    for (const p of parseCSV(PUZZLES_CSV)) {
-      if (seen.has(p.id)) continue;
-      if (!isValid(p)) { console.warn('Puzzle skipped (invalid):', p.id); continue; }
-      seen.add(p.id); all.push(p);
-    }
-    cache = buildVolumes(all);
+    cache = (Array.isArray(VOLUMES) ? VOLUMES : []).map((def, i) => {
+      const id = def.id || 'vol-' + (i + 1);
+      return { id, index: i, title: def.title || `Книга ${i + 1}`, short: def.short || def.title || `Книга ${i + 1}`, puzzles: parseBook(def.csv || '', id) };
+    }).filter(v => v.puzzles.length);
     return cache;
   }
   const getVolume = id => getVolumes().find(v => v.id === id) || null;
+  /** All books together: what the main «Решать» button draws from. */
+  function getMixed() {
+    if (mixed) return mixed;
+    const seen = new Set(), puzzles = [];
+    for (const v of getVolumes()) for (const z of v.puzzles) if (!seen.has(z.id)) { seen.add(z.id); puzzles.push(z); }
+    mixed = { id: 'all', index: -1, title: 'Все книги', short: 'Все книги', puzzles, mixed: true };
+    return mixed;
+  }
 
   /** Next puzzle for this player from the volume. Current rule:
       1) never-seen puzzles first, at random;
@@ -84,5 +91,5 @@ const PuzzleSource = (function () {
     return rnd(pool.length ? pool : all);
   }
 
-  return { getVolumes, getVolume, pickNext, parseCSV, isValid };
+  return { getVolumes, getVolume, getMixed, pickNext, parseCSV, isValid };
 })();

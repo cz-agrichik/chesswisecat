@@ -1,8 +1,12 @@
-/* data/puzzles.js — puzzle data, Lichess CSV format, pasted as is.
-   Current set: tasks_backrank600.csv (back-rank mates, rating up to 600).
-   VOLUMES (bottom of the file) puts puzzles into books on the shelf:
-   ids: null means "every puzzle from the CSV"; otherwise list puzzle ids. */
-const PUZZLES_CSV = `PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl
+/* data/puzzles.js — the books on the shelf. Each book is one Lichess CSV pasted as is.
+   Fields: id (the cat's lines per book live under this id in ui/texts.js BOOK_TEXTS),
+   title (book page), short (spine of the book), csv.
+   Order of books = order on the shelf. */
+const VOLUMES = [
+  {
+    id: 'backrank', title: 'Маты на последней горизонтали', short: 'Последняя горизонталь',
+    // tasks_backrank600.csv — back-rank mates, rating up to 600
+    csv: `PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl
 hUjQL,3r2k1/1q3ppp/p3p3/PpR1P3/3Q4/6P1/5P1P/2R3K1 b - - 0 29,d8d4 c5c8 b7c8 c1c8 d4d8 c8d8,587,85,100,94,backRankMate endgame long mate mateIn3 queenRookEndgame,https://lichess.org/hQL2vxZy/black#58
 KObot,2r3k1/p1r4p/1p4p1/5p2/3Nb3/Q7/PP5P/1KB2R2 w - - 4 42,b1a1 c7c1 f1c1 c8c1,540,86,100,153,backRankMate mate mateIn2 middlegame short,https://lichess.org/UGv1Xj5I#83
 kCTdQ,3r1Q1k/p5pp/1p2p1p1/8/4p1Pb/PN2B2P/1qP5/5RK1 b - - 7 30,d8f8 f1f8,399,104,71,249,backRankMate endgame mate mateIn1 oneMove,https://lichess.org/BealPFEj/black#60
@@ -202,8 +206,339 @@ gEItM,k3Q2r/pp6/8/8/4RB2/1PPq2P1/P5KP/8 b - - 2 33,h8e8 e4e8 d3d8 e8d8,399,100,1
 Es4tw,5k1r/2p3p1/p6p/3n4/2bP4/R7/1P2rPPP/1NR3K1 w - - 0 22,c1c4 e2e1,399,103,85,296,backRankMate endgame mate mateIn1 oneMove,https://lichess.org/l7WFE28u#43
 IWqzt,3N4/p3R3/6pk/7p/2Bp4/1P6/P1r3PP/7K w - - 4 37,e7a7 c2c1 c4f1 c1f1,566,86,100,175,backRankMate endgame mate mateIn2 short,https://lichess.org/835LpJee#73
 alayL,r4k1r/p4ppp/2p2q2/1p2R3/1B1N4/3K4/PP3PPP/4R3 b - - 3 19,f8g8 e5e8 a8e8 e1e8,482,110,87,671,backRankMate mate mateIn2 middlegame short,https://lichess.org/HnvHF1Xh/black#38
-3IT4e,4r3/7p/5k2/5p2/1RP3p1/5N2/6PP/7K w - - 0 35,f3d2 e8e1 d2f1 e1f1,561,114,81,217,backRankMate endgame mate mateIn2 short,https://lichess.org/o9O9LNXY#69`;
-
-const VOLUMES = [
-  { id: 'backrank', title: 'Маты на последней горизонтали', short: 'Последняя горизонталь', ids: null },
+3IT4e,4r3/7p/5k2/5p2/1RP3p1/5N2/6PP/7K w - - 0 35,f3d2 e8e1 d2f1 e1f1,561,114,81,217,backRankMate endgame mate mateIn2 short,https://lichess.org/o9O9LNXY#69`,
+  },
+  {
+    id: 'hanging-endgame', title: 'Висячие фигуры в эндшпиле', short: 'Висячие в эндшпиле',
+    // task_hanging600_endgame.csv — hanging pieces in the endgame, rating up to 600
+    csv: `PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl
+0CweW,4R3/pp5k/3p2p1/3P4/P1r2bP1/2r5/P1B5/1KR5 w - - 0 38,c2g6 h7g6 c1c3 c4c3,474,88,100,254,advantage endgame hangingPiece short,https://lichess.org/i5ricZVm#75
+0jfEN,8/2k5/p2p1p2/2pBP3/1pN3p1/1P3q2/P1P5/2KRB2r b - - 0 42,f3d1 c1d1 h1e1 d1e1,530,103,82,106,crushing endgame hangingPiece master short,https://lichess.org/TbMpl1Dq/black#84
+0nXca,3r2k1/ppb3pp/2p2p2/2P5/3P4/1N2r3/PP4PP/3RR1K1 b - - 1 22,c7h2 g1h2 e3e1 d1e1,545,102,67,213,advantage endgame hangingPiece short,https://lichess.org/Nl8PmbH0/black#44
+0olA8,3r2k1/2p2pp1/p6p/8/8/2P4P/2P2PP1/1Q1r2KR w - - 1 25,b1d1 d8d1 g1h2 d1h1,591,88,100,94,crushing endgame hangingPiece short,https://lichess.org/lxDxOaNv#49
+1LcUO,8/1p3p2/p4Pk1/2p1P3/5Kp1/1B3bP1/P5r1/4R3 w - - 0 39,b3f7 g6f7 e5e6 f7f6,579,84,83,167,advantage endgame hangingPiece master short,https://lichess.org/4ue5OUtC#77
+1iQbK,8/8/r3P3/5B1R/1ppk1p2/p4P1P/K1R2Pr1/8 w - - 0 38,c2c4 d4c4 f5d3 c4d3,417,108,93,511,crushing endgame hangingPiece short,https://lichess.org/FEi7aao7#75
+24mgE,2r2k2/1K3p2/5Q2/pp2pN2/P3P3/2P4P/1P1r1q2/8 b - - 2 45,d2d7 b7c8 f2c5 c8d7,579,89,100,820,crushing endgame hangingPiece master short,https://lichess.org/ReiaPlfj/black#90
+2MNGo,8/8/8/4p3/4P1K1/1p6/1P6/1Bk5 w - - 3 49,g4f5 c1b1 f5e5 b1b2,544,88,80,137,crushing endgame hangingPiece short,https://lichess.org/E5h2i66a#97
+40mS4,1k2r3/1p6/4p3/p3P2p/P7/5q2/1P1p2Q1/6RK b - - 3 45,e8g8 g2f3 g8g1 h1g1,515,90,100,426,crushing endgame hangingPiece master short,https://lichess.org/TiALC3Fx/black#90
+4kbIM,r2q3r/p2k1p2/5p1p/2Pp4/4p3/2P2Q2/P4PPP/R4RK1 w - - 0 19,f3f6 d8f6,534,100,82,217,crushing endgame hangingPiece oneMove,https://lichess.org/v9KSxdQ2#37
+5cy6N,r2k3q/1pp1n3/p6p/3PR1p1/2P1Q3/8/5PPP/R5K1 w - - 0 31,e5e7 h8a1 e4e1 a1e1,580,91,42,75,advantage endgame hangingPiece short,https://lichess.org/3bVplw3p#61
+5vVf5,4r3/7p/R2b1k2/2p1Rp2/5K1P/8/P4P2/8 b - - 2 36,e8e5 a6d6 e5e6 d6e6,514,99,100,130,crushing endgame hangingPiece master short,https://lichess.org/6w7qcNtN/black#72
+5xAyQ,5rk1/2p3p1/1p5p/p2P4/2P1q3/P4pP1/1P3Q1P/4R1K1 b - - 7 30,e4e1 f2e1 f3f2 e1f2 f8f2 g1f2,594,91,100,134,advantage endgame hangingPiece long,https://lichess.org/aIupoU2s/black#60
+6KnQV,5Q2/1bkr1p2/p3pN2/2p1P3/8/8/P1P2qPP/1R5K w - - 0 27,b1b7 c7b7 f8b8 b7b8,580,83,84,104,crushing endgame hangingPiece short,https://lichess.org/uoJPJhZB#53
+6PDD5,8/3k4/1p1rq3/8/8/PQR3P1/KP5P/8 w - - 9 59,c3c7 d7c7 b3e6 d6e6,547,101,91,109,crushing endgame hangingPiece master short,https://lichess.org/OShGWrNK#117
+6wytu,r5k1/4q2p/p3R1pB/5p2/3r4/5Q1P/5PP1/6K1 b - - 0 32,e7e6 f3a8 e6c8 a8c8,574,90,78,82,crushing endgame hangingPiece short,https://lichess.org/zBx9Gthf/black#64
+6xrJ1,6k1/1p3p2/p2p1bp1/2pPq3/P1P2Q2/1P3RKP/2B3P1/4r3 b - - 14 42,f6h4 g3h4 e5f4 f3f4,578,99,90,1076,crushing endgame hangingPiece short,https://lichess.org/nf0miUpp/black#84
+7AyPQ,3r2k1/1p3pp1/4p2p/8/p3P3/P1P1Q3/1P3nPP/3R3K w - - 1 36,e3f2 d8d1 f2g1 d1g1,548,104,88,1066,crushing endgame hangingPiece master queenRookEndgame short,https://lichess.org/tnUScHcq#71
+7eXUG,8/5pk1/6pp/p7/P1pq3P/2Q3P1/5r2/2R3K1 b - - 1 40,f2f1 g1f1 d4c3 c1c3,567,92,66,189,crushing endgame hangingPiece short,https://lichess.org/QmlV0sz0/black#80
+85Xoj,3r1b1k/6p1/p3Q2p/1p2B3/6PP/3p4/PP1q4/5R1K w - - 3 34,f1f8 d8f8 e5g7 h8g7,587,97,83,270,crushing endgame hangingPiece master short,https://lichess.org/UyDr54Ta#67
+867iq,8/5n1k/7p/4B3/6p1/2PK1P2/5P2/8 w - - 1 53,f3g4 f7e5 d3e3 e5g4,591,88,81,533,advantage endgame hangingPiece master short,https://lichess.org/h0W5N2wK#105
+8fYKZ,3r2k1/pp1r3p/2pn1p2/4pP2/8/P1P3P1/3N1P1P/1R1R2K1 w - - 1 21,d2e4 d6e4 d1d7 d8d7,595,100,80,357,crushing endgame hangingPiece short,https://lichess.org/PbwkA2vk#41
+97zZN,N1r3k1/6p1/5pb1/4p2p/3b2P1/1P3PBP/P2R4/2R3K1 w - - 1 37,d2d4 c8c1 d4d1 c1d1,578,104,97,416,advantage endgame hangingPiece short,https://lichess.org/a2n2OrTD#73
+9ye2G,5Q2/7k/8/5p1p/4p3/P6P/1P3qBK/8 w - - 20 50,f8f5 f2f5 g2e4 f5e4,459,95,84,171,crushing endgame hangingPiece master short,https://lichess.org/3TfblCTq#99
+A0AqR,1r6/p2R2bk/6pp/2p1Pr2/8/2PQ1q2/PP3P1P/3R2K1 w - - 0 31,d7g7 h7g7 d3f3 f5f3,583,94,81,185,crushing endgame hangingPiece short,https://lichess.org/yhVdpvdD#61
+AJ2RM,1q2r1k1/5pp1/1Np4p/2np4/1p1P4/1P2Q2P/1P3PP1/R5K1 w - - 0 27,e3e8 b8e8 a1a8 e8a8,462,105,82,229,advantage endgame hangingPiece short,https://lichess.org/kkAfki5j#53
+BKtsH,8/5pkp/6p1/4q3/8/P1Q3P1/1KR4P/3r4 b - - 25 74,d1b1 b2b1 e5c3 c2c3,447,107,72,410,crushing endgame hangingPiece short,https://lichess.org/ISBJhbIP/black#148
+BcsRe,8/1pR5/b1p3k1/P1Pp2p1/PK1P1pP1/5P2/8/8 w - - 47 63,c7b7 a6b7 a5a6 b7a6,495,102,82,69,crushing endgame hangingPiece short,https://lichess.org/ncVNKzdO#125
+C6jlh,6k1/p1p2ppp/1p6/4P3/2P2P2/2Bq1rPb/PP5P/3RQ1K1 b - - 10 32,d3d1 e1d1 f3f1 d1f1 h3f1 g1f1,477,84,100,314,crushing endgame hangingPiece long,https://lichess.org/v9wkeUDu/black#64
+DCKhq,3r1rk1/3R1B1p/6p1/8/1p2P3/1P3P2/2P3PP/1K6 b - - 0 29,f8f7 d7d8,569,94,84,1124,crushing endgame hangingPiece oneMove rookEndgame,https://lichess.org/VRx9Uqt2/black#58
+Eh3uL,1k2r3/ppq3p1/2p2p1p/2b2P2/4p1P1/5Q1P/PPP2B2/2K1R3 b - - 1 24,e4f3 e1e8 c7d8 e8d8,442,102,91,1653,crushing endgame hangingPiece queensideAttack short,https://lichess.org/Fn1qZviB/black#48
+FUZv1,2R5/2P2r2/5k2/6pp/8/7P/6PK/8 w - - 1 50,c8f8 f7f8 c7c8q f8c8,579,104,94,525,crushing endgame hangingPiece rookEndgame short,https://lichess.org/VVTPewgC#99
+Fco9x,8/8/4k3/2B4K/7P/6p1/5r2/8 b - - 0 66,g3g2 c5f2 g2g1q f2g1,570,94,91,513,crushing endgame hangingPiece short,https://lichess.org/399J7gCH/black#132
+G0Ieg,3r2k1/p4pp1/2n4p/2p5/5Pb1/2BB2P1/PP1R3P/6K1 w - - 0 30,d3h7 g8h7 d2d8 c6d8,554,91,62,90,advantage endgame hangingPiece short,https://lichess.org/4Yd59tOW#59
+GWEOF,8/2k1P3/8/pppQ4/3p4/7p/1P2P2P/7K w - - 0 53,d5d7 c7d7 e7e8r d7e8,461,97,60,154,crushing endgame hangingPiece master short,https://lichess.org/TDMjoFFd#105
+Ga0Lu,8/5pkp/4p1p1/8/3bP3/5P2/6PP/r1B1RK2 w - - 2 29,c1h6 g7h6 e1a1 d4a1,519,93,100,453,crushing endgame hangingPiece short,https://lichess.org/7GGGLaqg#57
+GgOb2,r1bRnk2/pp3ppp/4p3/8/1P6/P5P1/4NPBP/6K1 w - - 4 27,g2b7 c8b7 d8a8 b7a8,593,99,75,526,advantage endgame hangingPiece short,https://lichess.org/rLkLCPgW#53
+H2MdZ,2kr3r/1pp2ppp/pbp5/8/4P3/1P2BP2/1P3KPP/R2R4 b - - 0 19,d8d2 d1d2 b6e3 f2e3,592,92,57,67,advantage endgame hangingPiece short,https://lichess.org/pW8XCGoF/black#38
+HAql4,4rk2/pp3p1p/6p1/7N/4q1Q1/1P2n1P1/P6P/5RK1 w - - 6 31,f1f7 f8f7 g4e4 e8e4,528,98,95,1006,crushing endgame hangingPiece short,https://lichess.org/8JH92Mvl#61
+HZz7O,1Qb4k/p5pp/2p1rp2/3Rq3/8/P3P3/1P2BPPP/6K1 b - - 1 24,e5d5 b8c8 e6e8 c8e8,537,97,81,190,crushing endgame hangingPiece short,https://lichess.org/W5FKNxBb/black#48
+Hz2u8,3r4/2k2p2/2pq2p1/p7/P5P1/2P5/6PQ/1R4K1 w - - 3 35,b1b7 c7b7 h2d6 d8d6,481,85,57,207,crushing endgame hangingPiece master short,https://lichess.org/rjF7w2wP#69
+IMofT,2r5/3q1p1k/6pp/Q4b2/P1PN1p2/1P5P/5PP1/3R1K2 w - - 1 36,d4f5 d7d1,428,96,88,1280,crushing endgame hangingPiece oneMove,https://lichess.org/HIiQsNJF#71
+IU73M,8/1p3pk1/3p3p/p2Pb1pP/8/3Q1RP1/2P2PK1/r2q1B2 w - - 5 38,f3f7 g7f7 d3d1 a1d1,576,98,94,160,crushing endgame hangingPiece short,https://lichess.org/gvkO7CeX#75
+JUEhk,2k3r1/ppp1p3/7p/8/4PB2/5N2/Pb4RP/2K5 w - - 0 25,c1b2 g8g2,512,110,67,108,advantage endgame hangingPiece oneMove,https://lichess.org/DoS4PIYy#49
+KLHZw,2r2k2/5p2/p3b1p1/1p1p3p/8/PPB1PP1P/4K1P1/2R5 w - - 1 28,c3g7 f8g7 c1c8 e6c8,592,100,76,405,crushing endgame hangingPiece short,https://lichess.org/lZkAatXW#55
+KLbrW,7r/1p1r1kbR/2p1p3/p2p2P1/P2P1B2/2PBP3/1P2KP2/8 w - - 4 30,d3g6 f7g6 h7h8 g7h8,569,91,78,131,crushing endgame hangingPiece short,https://lichess.org/sJ6k8Uxv#59
+KRSow,r7/1R1P4/2k1K3/8/8/8/8/8 w - - 0 70,b7b8 a8b8 d7d8r b8d8,591,91,87,382,crushing endgame hangingPiece rookEndgame short,https://lichess.org/aol9C9Bt#139
+KTL2j,4k3/pR2B3/1b1P4/8/2K4p/2P5/r6P/8 w - - 0 38,d6d7 e8e7 d7d8b e7d8,575,107,95,399,advantage endgame hangingPiece short,https://lichess.org/gxMF0NEq#75
+KZkaw,1r4k1/qBQ2p2/P3p1p1/7p/8/6P1/3RP1KP/4b3 w - - 2 33,c7b8 a7b8 d2d8 b8d8,588,101,92,420,advantage endgame hangingPiece master short,https://lichess.org/smtiUbqb#65
+LeMe1,2r5/4Pk2/5P2/8/4K3/8/2p5/2R5 w - - 2 52,c1c2 c8c2 e7e8q f7e8,572,90,100,464,crushing endgame hangingPiece master rookEndgame short,https://lichess.org/wF8OHOtA#103
+Lj2y6,8/3q1p1k/4p1pp/8/8/2Q3PP/2p4K/8 b - - 2 52,d7d2 c3d2,527,108,79,203,crushing endgame hangingPiece oneMove queenEndgame,https://lichess.org/tXNyB4gT/black#104
+MmGaH,8/3B4/p1P5/P5k1/b2K2p1/6P1/8/8 w - - 1 59,c6c7 a4d7 c7c8q d7c8,547,97,95,366,bishopEndgame crushing endgame hangingPiece short,https://lichess.org/DEf98Dwk#117
+NZtgb,6k1/p4p2/1pRq1np1/3P4/3Q1PPp/7P/P3r1B1/6K1 b - - 2 30,e2g2 g1g2 d6d5 d4d5,524,91,80,629,crushing endgame hangingPiece short,https://lichess.org/b268sc4G/black#60
+NqdUo,5r2/4KP2/6R1/p2p3p/2p4P/P1P5/1P3kp1/8 b - - 3 55,f8f7 e7f7 g2g1q g6g1,556,100,80,697,crushing endgame hangingPiece master masterVsMaster rookEndgame short,https://lichess.org/1Y0lNTB9/black#110
+OUXiG,8/4bp1k/4p3/4P1PP/p7/5N2/1K6/8 b - - 18 54,e7g5 f3g5 h7h6 g5f7,568,78,100,131,crushing endgame hangingPiece master short,https://lichess.org/YJqhz7f1/black#108
+PCNST,8/2p1P1b1/4N3/5P2/b1k5/4B3/1p6/1K6 b - - 1 43,a4c2 b1c2 b2b1q c2b1,404,107,77,161,crushing endgame hangingPiece short,https://lichess.org/eDnZXMCR/black#86
+PU5pf,8/6p1/2p5/1kP2pPp/7P/8/1r3r2/5RK1 b - - 1 60,b2b1 f1b1 f2b2 b1b2,466,111,91,1194,crushing endgame hangingPiece master rookEndgame short,https://lichess.org/USVHEyFd/black#120
+QL7GL,8/1p2nk1p/5pp1/3p4/5P2/1P2RBPP/Q4PK1/1rq5 w - - 26 45,e3e7 f7e7 a2b1 c1b1,519,89,100,215,crushing endgame hangingPiece master short,https://lichess.org/L8C57Xu3#89
+RZQ31,6k1/5p1p/6p1/1P6/8/Pbq2BP1/3p1PKP/1Q6 b - - 2 32,c3f3 g2f3 d2d1q b1d1,591,87,73,107,crushing endgame hangingPiece master short,https://lichess.org/0hhV8mlL/black#64
+Rasyj,5r2/Pb5p/1p4p1/2k5/1Np1p3/2Pp2P1/1P1K3P/5R2 b - - 7 53,f8f2 f1f2 e4e3 d2e3,592,85,88,97,crushing endgame hangingPiece short,https://lichess.org/FbVnilT2/black#106
+RayLC,8/8/6k1/2p3p1/3b2Q1/7P/1r2Q1K1/8 w - - 7 52,g4d4 b2e2 d4f2 e2f2,597,82,100,293,crushing endgame hangingPiece short,https://lichess.org/ODxcJIqr#103
+S3Tqk,5rk1/1pp2rp1/p3p3/2PpP2p/PP1P2pP/4P1P1/5R1K/6R1 w - - 0 30,g1f1 f7f2 f1f2 f8f2,544,102,79,139,crushing endgame hangingPiece rookEndgame short,https://lichess.org/BFGnhvmp#59
+Scy1A,8/3r2p1/6p1/3b1p1k/3R3P/4B1PK/5P2/8 b - - 25 52,d5g2 h3g2 d7d4 e3d4,432,109,95,923,crushing endgame hangingPiece short,https://lichess.org/HiTANNf5/black#104
+SvNwm,6k1/pp3pp1/7p/3p4/1P1P3q/7r/P2N2R1/1R3QK1 w - - 6 31,g2g7 g8g7 f1h3 h4h3,474,95,72,388,advantage endgame hangingPiece short,https://lichess.org/3T9y9izO#61
+Sxu3W,1r4k1/5ppp/8/6N1/3p1P2/Ppq5/1Q5P/K1R5 b - - 3 31,c3c1 b2c1 b3b2 c1b2 b8b2 a1b2,574,98,83,403,advantage endgame hangingPiece long,https://lichess.org/v7rs4WFC/black#62
+TBThg,r6n/1ppk4/p3R3/P3P3/1P4B1/2p1b1Pp/7P/R6K w - - 0 30,e6c6 d7c6,525,105,76,166,crushing endgame hangingPiece oneMove,https://lichess.org/RhZqAvJG#59
+TP6Mx,2r3k1/3p1p2/1B2p1p1/3rP2p/bK3P2/2R3P1/1R5P/8 b - - 13 42,d5b5 b4a4 b5b2 c3c8,567,86,100,212,advantage endgame hangingPiece master short,https://lichess.org/Fiyv1oET/black#84
+UBExB,8/2n5/6p1/Pp3p1p/1P1P1P1P/2K1k3/8/4B3 w - - 6 42,e1f2 e3f2 d4d5 c7d5,498,90,89,280,advantage endgame hangingPiece short,https://lichess.org/zhDd6mZM#83
+UEkTJ,2r2r2/3Rbkpp/4p3/4p3/P1B5/1P6/1P3PPP/1K2R3 w - - 0 27,c4e6 f7e6 d7e7 e6e7,585,89,100,70,advantage endgame hangingPiece short,https://lichess.org/0OG50iRA#53
+UJ5Mc,2rr4/5Q1P/8/2k1p3/p2pP3/8/1PP3P1/6K1 w - - 0 42,f7d7 d8d7 h7h8q c8h8,577,101,62,153,crushing endgame hangingPiece master short,https://lichess.org/xGwSkRrc#83
+UeCDi,8/8/8/1N2p3/4Pp2/2Q2K2/p7/1k6 w - - 3 59,c3a1 b1a1 b5c3 a1b2 c3a2 b2a2,562,87,100,228,crushing endgame hangingPiece long,https://lichess.org/f4CwPyMC#117
+UqYwH,3r2k1/p4ppp/1p6/2qp4/2P1QPP1/7P/PP6/2KR4 b - - 0 32,d5e4 d1d8 c5f8 d8f8,406,88,100,230,advantage endgame hangingPiece queenRookEndgame short,https://lichess.org/qgtKL6j3/black#64
+UzoDS,8/p7/b1p1p1p1/3qP2k/4Q1p1/8/6rP/R3R2K b - - 6 33,g2h2 h1h2 d5e4 e1e4,597,100,71,547,crushing endgame hangingPiece short,https://lichess.org/dBxKjg21/black#66
+V5774,8/p4ppk/6qp/8/3R4/1P1Q1b2/PBr4P/5K2 b - - 3 36,c2f2 f1f2 g6d3 d4d3,584,96,89,1034,crushing endgame hangingPiece short,https://lichess.org/hyPbazcE/black#72
+VZA9W,3r2k1/4qpbp/p1p3p1/2B5/8/1P3P2/P4QPP/3R2K1 w - - 2 23,c5e7 d8d1 f2e1 d1e1,587,96,83,517,crushing endgame hangingPiece short,https://lichess.org/lv9epqAu#45
+VoMOz,1R2b3/4rkp1/p2Qp3/3p1qP1/2pP4/2P1B3/P1PK4/8 w - - 1 36,d6e7 f7e7 b8e8 e7e8,575,96,79,366,crushing endgame hangingPiece short,https://lichess.org/gl4YAHlA#71
+Vy2VB,8/5b2/2k3p1/2P1R3/3KP3/5p1r/2R1B2r/8 w - - 0 48,e2b5 c6b5 c2h2 h3h2,490,91,74,1010,crushing endgame hangingPiece master short,https://lichess.org/r1yYUZbt#95
+WcOr5,4rr1k/1p3p2/5p1p/p7/3P1b2/3B1P2/PP3K2/4RR2 b - - 4 26,f4g3 f2g3 e8e1 f1e1,480,103,92,828,crushing endgame hangingPiece short,https://lichess.org/u45P8TDC/black#52
+XLh0J,8/3b1k2/pq1p2p1/3P1pP1/1p6/1P2Q2P/5rBK/4R3 b - - 3 39,f2g2 h2g2 b6e3 e1e3,594,97,91,1005,crushing endgame hangingPiece short,https://lichess.org/4N78tIvb/black#78
+XYu81,4r1k1/ppbn1ppp/2p5/3p4/3P2P1/2P1B2P/PP2RP2/2N3K1 b - - 0 26,c7f4 e3f4 e8e2 c1e2,570,105,68,119,advantage endgame hangingPiece short,https://lichess.org/z2o0XqhL/black#52
+Y2cWE,7r/p1krR1b1/3p3p/2p3p1/P1P5/6B1/5PPP/4R1K1 w - - 3 26,g3d6 c7d6 e1e6 d6c7 e7d7 c7d7,553,96,93,1269,crushing endgame hangingPiece long,https://lichess.org/4GByjHF9#51
+YrB34,6k1/p4pp1/1p2p3/3q2pP/8/5QR1/P4PK1/2r5 b - - 5 36,c1g1 g2g1 d5f3 g3f3,591,84,100,305,advantage endgame hangingPiece short,https://lichess.org/AfYeROSZ/black#72
+aKNh9,8/5p2/4pk2/R7/8/4PK2/p3r3/8 b - - 3 59,e2e3 f3e3 a2a1b a5a1,547,91,81,182,crushing endgame hangingPiece master rookEndgame short,https://lichess.org/zrZiLB64/black#118
+bEmaU,2r5/1q2k2p/4p3/4b3/4P1p1/3Q2P1/P4RKP/3R4 w - - 2 42,f2f7 e7f7 d3d7 b7d7,591,90,73,104,advantage endgame hangingPiece master short,https://lichess.org/kSNg9mnc#83
+bWDLm,8/R6p/3k2b1/1PN5/3r4/4n2P/P1p3P1/2R3K1 w - - 4 33,a7d7 d6c5 d7d4 c5d4,581,93,87,890,advantage endgame hangingPiece short,https://lichess.org/wbpX6KOA#65
+bnlzF,4r3/1p6/3b1k2/1P6/3p1pB1/4p2P/2P3KP/6R1 b - - 0 39,e8c8 g4c8 f4f3 g2f3,533,90,81,921,crushing endgame hangingPiece master short,https://lichess.org/x1nREesP/black#78
+d0gqQ,1B1k4/3B1ppp/2P1p3/7P/p5P1/5PK1/3r4/8 w - - 0 51,c6c7 d8d7 c7c8q d7c8,510,104,93,547,crushing endgame hangingPiece short,https://lichess.org/5ZDX0xJC#101
+dCxnq,8/2pq3p/1p3pk1/p4Np1/7P/P3Q3/4RB2/6K1 w - - 1 42,e3d3 d7d3,570,94,95,1833,advantage endgame hangingPiece oneMove,https://lichess.org/rDnRhhTy#83
+eTsAx,r5k1/1p2qppp/2p1p3/p1n1P3/RQ6/1P5P/5PP1/1N1B2K1 b - - 0 24,a5b4 a4a8 e7f8 a8f8,533,97,89,491,advantage endgame hangingPiece kingsideAttack master short,https://lichess.org/yvTwmgiN/black#48
+eu4g4,3b2k1/4P1p1/p7/1pBp4/1P2q3/6PP/5P2/5K2 b - - 2 42,e4e2 f1e2 d8e7 c5e7,587,91,78,217,crushing endgame hangingPiece master masterVsMaster short,https://lichess.org/Uw5FKoU1/black#84
+fxuKT,3rr1k1/ppp3pp/8/3p4/2nRN3/P2K4/1PB3PP/7R b - - 6 22,d5e4 d3c4 d8d4 c4d4,526,96,94,1038,crushing endgame hangingPiece short,https://lichess.org/fuApUiXO/black#44
+fyCxz,8/6p1/p4p1p/P1k1p2P/1pb1P1P1/2B1K3/4BP2/8 w - - 0 44,c3b4 c5b4 e2c4 b4c4,593,97,65,48,bishopEndgame crushing endgame hangingPiece short,https://lichess.org/cg4Ytv6q#87
+gcaUJ,8/p4pk1/2p5/1p2r1P1/2q5/PQ4P1/KPr5/2R4R b - - 3 33,c2b2 a2b2 c4b3 b2b3,565,91,88,326,crushing endgame hangingPiece master short,https://lichess.org/v2lh66E0/black#66
+hXHbJ,8/8/7p/R7/6k1/4bpP1/4p3/4K3 b - - 3 79,e3f2 e1f2 e2e1b f2e1,573,91,82,155,crushing endgame hangingPiece master masterVsMaster short,https://lichess.org/JnSszZzy/black#158
+hf9PO,2r3k1/4R1P1/7P/6K1/8/8/8/8 w - - 9 77,e7e8 c8e8 g5g6 e8e6,548,82,100,145,crushing endgame hangingPiece rookEndgame short,https://lichess.org/we1jdXPP#153
+htkO6,8/2b1rk2/2p1R2R/pp3r2/3B1P2/P1P3P1/1PK5/8 w - - 0 33,h6h7 f7e6 h7e7 e6e7,562,91,73,255,crushing endgame hangingPiece short,https://lichess.org/Nl487rfS#65
+iMvET,8/b6p/P7/8/8/4p1BP/4k1K1/8 w - - 0 54,g3b8 a7b8 a6a7 b8a7,572,84,79,154,bishopEndgame crushing endgame hangingPiece master short,https://lichess.org/zOYS73na#107
+iY7dK,4r1k1/pp3ppp/2p5/3p4/3P4/5P2/PPP1N2b/4RK2 b - - 0 26,h2g3 e2g3 e8e1 f1e1,587,89,82,283,advantage endgame hangingPiece short,https://lichess.org/tigJ5ZUD/black#52
+iYMQa,4r1k1/2BQ2p1/p4np1/1p2b3/6P1/2P4P/PP6/5RK1 w - - 3 33,d7f7 g8f7 c7e5 e8e5,590,94,82,112,advantage endgame hangingPiece short,https://lichess.org/HhXECOqu#65
+igjve,3r4/3P1q1k/6p1/3Q2p1/6P1/2P4P/1P6/rNKR4 b - - 2 42,a1b1 c1b1 f7d5 d1d5,524,93,92,149,crushing endgame hangingPiece short,https://lichess.org/Yuw0jHyQ/black#84
+jYSo1,2kr4/p1p2p1p/1pp3p1/4r3/5q2/2PR3P/PP1Q3P/2KR4 b - - 0 21,d8d3 d2f4 d3d1 c1d1,594,106,78,192,advantage endgame hangingPiece short,https://lichess.org/LaeNqHH7/black#42
+jkhuP,4k3/1b5p/p3r1p1/1p3p2/2pB3b/P1P2PPP/1PN2K2/4R3 b - - 0 32,h4g3 f2g3 e6e1 c2e1,587,89,100,145,advantage endgame hangingPiece short,https://lichess.org/S3zqy62o/black#64
+k6iwm,4r1k1/6p1/p2p4/1p4q1/2pP2b1/2P1B3/PP4QP/4R2K w - - 0 30,e3g5 e8e1 g2f1 e1f1,599,97,76,214,crushing endgame hangingPiece short,https://lichess.org/DKsiNVlG#59
+k87d1,3k4/pp6/8/7p/5P2/P1K1p3/1PP1B3/3r4 b - - 1 40,h5h4 e2d1 e3e2 d1e2,564,86,82,164,crushing endgame hangingPiece short,https://lichess.org/TpbZ0FaD/black#80
+kWv99,2r5/6kn/p2p2pR/1p6/4P3/6N1/P2Q2PK/2q5 w - - 4 42,h6g6 g7g6 d2c1 c8c1,474,90,84,330,crushing endgame hangingPiece short,https://lichess.org/PFh8bln1#83
+kqExN,6k1/5n1p/4p1p1/p7/P4P2/3q2P1/3pQ2P/5K2 b - - 3 41,f7d6 e2d3 d2d1r d3d1,589,108,81,724,crushing endgame hangingPiece master short,https://lichess.org/pWQ35fQZ/black#82
+kwvjB,4r1k1/5pp1/1N2p2p/8/q2P4/6P1/5PQP/2rR2K1 w - - 0 35,b6a4 c1d1 g2f1 d1f1,594,90,80,682,advantage endgame hangingPiece short,https://lichess.org/JtqzIJ0P#69
+lanpg,r4k2/2p2pp1/p2p1R2/8/1p1n2Q1/8/PPPBq1PP/7K w - - 1 24,f6f7 f8f7 g4e2 d4e2,526,92,86,422,advantage endgame hangingPiece short,https://lichess.org/4Ms7wRcl#47
+mClJo,8/p4BP1/1p1kpn2/1P3pK1/1P3P2/P7/r7/8 b - - 7 54,a2g2 g5f6 g2g7 f6g7,574,92,64,84,crushing endgame hangingPiece master short,https://lichess.org/d6sp6f4i/black#108
+matnF,r7/p4pkp/2p2p2/8/8/2q1Qb2/2P3PP/R3R2K b - - 1 26,f3g2 h1g2 c3e3 e1e3,546,102,65,259,crushing endgame hangingPiece short,https://lichess.org/0c5FND9Y/black#52
+nvydS,5rk1/p7/1p1p4/2rPp1pp/3qB3/P1P2PQP/4p1PB/2R3K1 w - - 2 34,c3d4 c5c1 g3e1 c1e1,579,102,92,343,crushing endgame hangingPiece kingsideAttack short,https://lichess.org/scVE4r2x#67
+oGbsh,8/4k3/p4b2/P1p2P1p/1p3K2/1PpP3P/2N5/8 b - - 6 54,f6e5 f4e5,560,101,81,420,crushing endgame hangingPiece oneMove,https://lichess.org/2GAzfJNw/black#108
+oapa5,7r/rk3p2/2q1p1pp/1p1pP3/RR1P1P2/2P1Q3/2P3PP/7K w - - 0 30,b4b5 c6b5 a4a7 b7a7,592,84,60,137,advantage endgame hangingPiece master short,https://lichess.org/wTEipEkU#59
+ob5IJ,3rk3/3p1pp1/p3p3/1p2PpP1/5P1q/P1P3Q1/1P3KPr/R3R3 b - - 2 26,h2g2 f2g2 h4g3 g2g3,587,100,73,171,crushing endgame hangingPiece short,https://lichess.org/Vt3y65Ie/black#52
+pLzbA,r7/5R2/1bp3pk/1p3b2/p3N2P/2P5/PP4P1/3B3K w - - 1 34,g2g4 f5e4 d1f3 e4f3,586,100,80,432,crushing endgame hangingPiece master short,https://lichess.org/1SYHmmWW#67
+q3waV,8/8/6kp/4p3/1P6/4p1PP/5qQK/8 b - - 4 49,e3e2 g2f2 e2e1q f2e1,599,103,78,213,crushing endgame hangingPiece master queenEndgame short,https://lichess.org/NOrmZ31R/black#98
+q9LFm,8/2p3kP/2P5/6n1/4B1p1/1K4P1/1p6/8 w - - 4 48,b3b2 g5e4 h7h8q g7h8,560,97,83,122,crushing endgame hangingPiece master short,https://lichess.org/tgK5xu93#95
+qOXQR,3r2k1/5qpp/8/8/4PP2/3p1NP1/1P2R1KP/3R4 b - - 0 31,d3e2 d1d8 f7e8 d8e8,490,95,96,267,crushing endgame hangingPiece master short,https://lichess.org/Bnps6th6/black#62
+qtGJ1,4r3/p2k2p1/4b2p/1p6/3p4/5P2/PPBK2PP/4R3 w - - 4 27,c2f5 e6f5 e1e8 d7e8,586,90,89,418,advantage endgame hangingPiece short,https://lichess.org/R4Fe9S1c#53
+rQSfW,2r5/1p2k1pp/n3p3/3R4/P7/5N1P/5PP1/Q1r3K1 w - - 1 25,a1c1 c8c1 d5d1 c1d1,587,100,67,461,crushing endgame hangingPiece short,https://lichess.org/P5Zdg07J#49
+ri37t,3r4/ppRb1kqQ/4p1n1/3p2p1/8/8/PP3PPP/R5K1 w - - 7 28,c7d7 d8d7 h7g7 f7g7,597,96,82,285,crushing endgame hangingPiece short,https://lichess.org/UyXlOa7v#55
+sd6Ve,8/8/7p/3p1rkP/3P4/4P2B/4Kp2/8 b - - 25 61,g5h5 h3f5 f2f1q e2f1,599,91,82,140,crushing endgame hangingPiece master short,https://lichess.org/4Hg8eScr/black#122
+ssD2B,8/pp1b4/2p1pkpp/3p4/P1P2r2/1P3N1P/4RPP1/1B4K1 w - - 3 32,g2g3 f4f3 e2e3 f3e3,579,94,64,103,advantage endgame hangingPiece short,https://lichess.org/JyMVQyUQ#63
+swKnE,2r3k1/5ppp/4p3/pNbn4/1P6/P7/3B1PPP/2R3K1 b - - 0 25,c5f2 g1f2 c8c1 d2c1,404,111,80,178,advantage endgame hangingPiece short,https://lichess.org/crsGq82s/black#50
+tJ66U,4r3/8/8/p1p3p1/P1P2k1p/1P3P1P/3pBKP1/8 b - - 5 46,e8e2 f2e2 d2d1q e2d1,568,101,80,114,crushing endgame hangingPiece short,https://lichess.org/BzJwWj4a/black#92
+uAITR,2k4r/1ppr2pp/p2b4/4R3/5B1P/8/PPP2PP1/R5K1 w - - 1 21,e5d5 d6f4 d5d7 c8d7,584,310,0,4,advantage endgame hangingPiece short,https://lichess.org/FVHICfSm#41
+uxzeq,3r1bk1/7p/RQ1p2p1/3Pp3/4qr2/1P3P2/6PP/5R1K w - - 0 29,f3e4 f4f1 b6g1 f1g1,526,92,80,98,advantage endgame hangingPiece short,https://lichess.org/gsHbRmG3#57
+vOuax,b7/P4p2/5k1p/1Bp2p2/2P2P2/4K1PP/8/8 w - - 5 38,b5c6 a8c6 a7a8q c6a8,542,89,100,160,bishopEndgame crushing endgame hangingPiece short,https://lichess.org/w8wypzmZ#75
+vQtmY,5R2/1r2Pnk1/p1pB2pp/1p2Kp2/1P6/P7/2P5/8 w - - 1 38,f8f7 g7f7 e7e8q f7e8,543,104,95,861,crushing endgame hangingPiece short,https://lichess.org/bAz5HApv#75
+wwNCn,5rk1/1p3qpp/p3Q3/3p4/P1p3P1/2P3b1/1P4P1/RB4K1 w - - 2 30,b1h7 g8h7 e6f7 f8f7,470,105,88,703,crushing endgame hangingPiece short,https://lichess.org/CAAmzTKb#59
+x10Sc,8/ppkrR2r/3p3p/P1pP4/2b2B2/8/5PPP/4R1K1 w - - 15 31,f4d6 c7d6 e7h7 d7h7,533,89,83,285,crushing endgame hangingPiece short,https://lichess.org/nmy80Mrl#61
+xSTSM,8/8/2k3p1/1p2p3/1P4P1/1K1pbP2/8/3N4 b - - 3 59,d3d2 d1e3 d2d1q e3d1,568,103,96,277,crushing endgame hangingPiece short,https://lichess.org/eujlTiaX/black#118
+xi9HI,6k1/p6p/2p1p1p1/8/8/4q1P1/PPPQ4/1K1N1r2 w - - 0 25,d2e3 f1d1 e3c1 d1c1,408,100,80,758,crushing endgame hangingPiece master masterVsMaster short,https://lichess.org/nEeSIpGs#49
+yOIeI,4r1k1/5q1p/p4Pp1/1p2Q3/8/3P4/PP4P1/5R1K w - - 5 28,e5e8 f7e8 f6f7 e8f7 f1f7 g8f7,478,103,82,486,crushing endgame hangingPiece long,https://lichess.org/C3IHT0bL#55
+yVB4Z,b1r3k1/5ppp/1n2p3/1p1pP3/1P3PP1/2NK3P/2P3B1/7R b - - 1 25,c8c3 d3c3 d5d4 c3d4,577,92,74,91,advantage endgame hangingPiece master short,https://lichess.org/ZYdN35uo/black#50
+yVQof,8/8/1Pk3nR/5p2/8/1r6/5KP1/8 b - - 4 48,b3b6 h6g6 c6b5 g6b6,544,104,79,140,crushing endgame hangingPiece short,https://lichess.org/7zmmitIK/black#96
+ymbZS,3r4/1pbr2pp/p4p2/5k2/1P2R3/P6P/1B2KPP1/3R4 w - - 1 25,g2g4 f5e4 d1d7 d8d7,408,107,89,1110,crushing endgame hangingPiece short,https://lichess.org/j02tBjLZ#49
+z4o0G,7Q/pp5p/4k3/3p1p2/3q1P2/1P6/P5PP/2r1B2K w - - 11 39,h8d4 c1e1 d4g1 e1g1,568,98,95,423,crushing endgame hangingPiece master short,https://lichess.org/QFQsF331#77
+zHZDN,6k1/8/6r1/4K1Bp/1p3P2/8/P7/8 b - - 4 52,g6e6 e5e6 b4b3 a2b3,534,91,74,137,crushing endgame hangingPiece master short,https://lichess.org/dEumcS9N/black#104
+zPSfF,5k2/6rP/6Q1/2Pb1p2/p7/K2P4/1P6/8 w - - 1 52,g6g7 f8g7 h7h8q g7h8,561,92,98,671,crushing endgame hangingPiece master short,https://lichess.org/3yIRW9PB#103
+zyBHp,8/3b1pk1/7p/r1ppPpPP/5P2/2RP2K1/2P5/4R3 w - - 3 39,e1a1 a5a1,599,104,43,82,advantage endgame hangingPiece oneMove,https://lichess.org/s4nWO9V2#77`,
+  },
+  {
+    id: 'hanging-middle', title: 'Висячие фигуры в игре', short: 'Висячие в игре',
+    // task_hanging600_middle.csv — hanging pieces in the opening / middlegame, rating up to 600
+    csv: `PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl
+0MvVG,r3k2r/ppp1nppp/3q4/2b5/2P5/1P3N2/P4PPP/R1BQR1K1 b kq - 0 15,c5f2 g1f2 d6d1 e1d1,598,94,90,471,advantage hangingPiece middlegame short,https://lichess.org/GNZYcIY9/black#30
+0r7l4,2r4r/1p3k2/p3bnp1/2q2p2/8/1P1BR3/PB2Q1PP/4R2K b - - 9 28,h8h2 h1h2 c5e3 e2e3,575,91,92,443,advantage hangingPiece middlegame short,https://lichess.org/JjqI7eR7/black#56
+253Iw,3rr1k1/p3qpbn/2p5/3p1P2/4nN1Q/1P1B2R1/P1P3PP/R5K1 w - - 9 28,g3g7 g8g7 h4e7 e8e7,558,95,80,91,advantage hangingPiece middlegame short,https://lichess.org/90eZjx7R#55
+2lCqY,r1bqkbnr/ppp1pppp/2n5/4P3/2Bp4/8/PPPP1PPP/RNBQK1NR w KQkq - 2 4,c4f7 e8f7,467,108,76,172,advantage hangingPiece oneMove opening,https://lichess.org/OkMq73m3#7
+2y7nd,1rbq1rk1/p1pp1ppp/2p5/4P3/1nP5/B7/P1P2PPP/1R1QKB1R b K - 2 12,b4c2 d1c2 b8b1 c2b1,538,96,85,110,crushing hangingPiece middlegame short,https://lichess.org/njLpUEMv/black#24
+34EwY,rnb1r1k1/ppp2pp1/7p/8/2BPqP2/P2Q2P1/4N1P1/2R1K2R w K - 0 17,c4f7 g8f7 d3e4 e8e4,596,90,65,172,crushing hangingPiece middlegame short,https://lichess.org/3OBxEOHa#33
+34SRL,r1bq1rk1/pp2nppp/2nbp3/3p4/3P4/1PPBPNB1/5PPP/RN1QK2R w KQ - 3 10,d3h7 g8h7 g3d6 d8d6,576,82,100,223,advantage hangingPiece opening short,https://lichess.org/i78VP5vG#19
+3RSBg,r2q1rk1/1ppnbppp/p1b5/4B3/8/2NB4/PPP2PPP/R2QR1K1 w - - 1 13,d3h7 g8h7 d1h5 h7g8 e5g7 g8g7,561,86,62,172,advantage hangingPiece long opening,https://lichess.org/f2UjtUbc#25
+4bOSU,r1b3k1/ppp2Npp/1b3n2/4p3/2B5/P1P4P/5PP1/R1Br1RK1 b - - 0 17,b6f2 g1f2 d1f1 f2f1,533,90,100,168,advantage hangingPiece middlegame short,https://lichess.org/D3od2IUW/black#34
+4dSMV,r1b2r2/1p2R1nk/n5p1/p1pP2P1/2P2q2/P1NBQp1P/1P3P2/4R1K1 w - - 1 31,e7g7 h7g7 e3f4 f8f4,576,94,84,1349,advantage hangingPiece middlegame short,https://lichess.org/YjXf0RlK#61
+5d1ky,r4rk1/p1qb1ppp/1p1bp3/2pp3n/3P1B2/2PBPN2/PP3PPP/R2Q1RK1 w - - 0 12,d3h7 g8h7 f4d6 c7d6,539,86,100,190,advantage hangingPiece middlegame short,https://lichess.org/G0ZVetTa#23
+5fnv0,1k1r3r/p1q2p1p/Pp2p2p/2b1P3/1PQ5/5N2/5PPP/R1R3K1 b - - 0 19,c5f2 g1f2 c7c4 c1c4,520,92,88,379,crushing hangingPiece middlegame short,https://lichess.org/EMEuHw4j/black#38
+5uqbR,r2qk2r/pp3ppp/4bn2/2p1P1B1/3b4/6P1/PP3PBP/RN1QR1K1 b kq - 0 13,d4f2 g1f2 d8d1 e1d1,495,102,89,477,advantage hangingPiece middlegame short,https://lichess.org/XvXr4lZ5/black#26
+604SI,5rk1/1pp2pp1/1b5p/nP2N3/4P3/2P1P3/2BrRKPP/R7 b - - 2 24,b6e3 f2e3 d2e2 e3e2,528,101,78,254,crushing hangingPiece middlegame short,https://lichess.org/tKQGB876/black#48
+6A5pg,r1bqr1k1/ppp2pbp/3p2p1/6B1/2BQn3/P1N4P/1PP2PP1/2KR3R w - - 0 12,c4f7 g8f7 d4g7 f7g7,546,100,83,406,advantage hangingPiece middlegame short,https://lichess.org/WkWBtDwf#23
+6RtUc,r1r3k1/4qppp/pb2p3/8/P1Np1P2/5QP1/1PP4P/R4RK1 b - - 0 26,c8c4 f3a8 e7d8 a8d8,554,98,60,410,advantage hangingPiece middlegame short,https://lichess.org/coMat8so/black#52
+6UgCr,rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 5 4,c5f2 e1f2,508,100,79,428,advantage hangingPiece oneMove opening,https://lichess.org/xy5CzPvW/black#8
+6sf0w,3r4/ppN1kq2/4bn2/8/5Q2/P5r1/1PP2K2/R3R3 b - - 1 32,f6g4 f2g3 f7f4 g3f4,558,96,69,116,crushing hangingPiece middlegame short,https://lichess.org/7QmeJra0/black#64
+7Ju9l,r4rk1/p1qb1ppp/1ppbp3/3p3n/3P4/2PBPNB1/PP3PPP/R2QK2R w KQ - 0 12,d3h7 g8h7 g3d6 c7d6,579,89,100,197,advantage hangingPiece middlegame short,https://lichess.org/ATQeo4z1#23
+7PiCO,r4rk1/2qn1ppp/bp1bp3/p1pp4/3P1B2/2PBPN1P/PP3PP1/R2Q1RK1 w - - 0 13,d3h7 g8h7 f4d6 c7d6,574,100,90,793,advantage hangingPiece middlegame short,https://lichess.org/VAXupxEO#25
+7PvxW,4r1k1/p4b1p/2p3pP/3p1pP1/2P2Q2/P4P2/1rPKBq2/R3R3 b - - 0 26,b2c2 d2c2 e8e2 e1e2,538,103,78,201,crushing hangingPiece master middlegame short,https://lichess.org/7qScPf3w/black#52
+840FV,r1b1k2r/pp3pp1/4p2p/q1b1Q3/2B5/2N5/PP3PPP/R3R1K1 b kq - 0 15,c5f2 g1f2 a5e5 e1e5,572,90,85,859,advantage hangingPiece middlegame short,https://lichess.org/4Yl1v7br/black#30
+8JB2V,r1b1r1k1/ppp2ppp/3p1q2/4n3/4Pb1N/N1PP4/PP2BQPP/R4RK1 b - - 3 14,f4h2 g1h2 f6f2 f1f2,516,99,79,231,advantage hangingPiece middlegame short,https://lichess.org/vNMSHg94/black#28
+8MiOa,r1bq1rk1/pp2nppp/2nbp3/3p4/3P4/2PB1NB1/PP3PPP/RN1QK2R w KQ - 1 9,d3h7 g8h7 g3d6 d8d6,548,94,73,213,advantage hangingPiece opening short,https://lichess.org/UPMZK3WP#17
+8UUiC,r1b2rk1/pp1nb1pp/2p1p3/8/3PQ3/6N1/P1BBKPPP/q6R b - - 1 17,f8f2 e2f2 a1d4 e4d4,560,97,77,540,advantage hangingPiece middlegame short,https://lichess.org/kcWZmRLV/black#34
+8Yjyi,4rn1k/pp4pp/2p5/2P1PPq1/1PB1R1nP/P7/3r4/2Q2RK1 b - - 0 32,d2g2 g1g2 g5c1 f1c1,593,86,77,259,crushing hangingPiece middlegame short,https://lichess.org/yb4T7oSj/black#64
+8jKpX,r1b2rk1/ppq2ppp/2nbp3/3p3n/3P4/2PB1NB1/PP1NQPPP/R3K2R w KQ - 5 11,d3h7 g8h7 g3d6 c7d6,574,92,100,334,advantage hangingPiece middlegame short,https://lichess.org/ZGNPks8i#21
+94wlV,rnbqkb1r/pppp1ppp/8/4p3/2B1n3/P7/1PPP1PPP/RNBQK1NR w KQkq - 0 4,c4f7 e8f7,510,107,70,183,advantage hangingPiece oneMove opening,https://lichess.org/bPHQh8ix#7
+9DGI3,r1b1kb1r/pp1p3p/5p2/8/1n6/8/PRP1PPPP/3QKB1R w Kkq - 0 13,b2b4 f8b4 d1d2 b4d2,583,95,78,234,crushing hangingPiece middlegame short,https://lichess.org/dKU78KVg#25
+9MYBz,r4rk1/1b2bppp/p3p3/4N1P1/3qBP1B/5Q2/P6P/R3K2R w KQ - 0 20,e4h7 g8h7 f3d3 d4d3,583,84,80,324,crushing hangingPiece middlegame short,https://lichess.org/FWhL2k3d#39
+9fuaD,2rq1rk1/pb1n1ppp/1p1bp3/4N1P1/2Pp1P2/3B4/PP5P/R1BQR1K1 w - - 1 16,d3h7 g8h7 e5f7 f8f7,566,98,78,367,advantage hangingPiece opening short,https://lichess.org/l5Rmck1q#31
+AenkT,3r1rk1/pp3ppp/3q1b2/1P6/8/3B3P/PP3PP1/R2Q1RK1 w - - 0 18,d3h7 g8h7 d1d6 d8d6,578,102,25,43,advantage hangingPiece middlegame short,https://lichess.org/m5PAyH7o#35
+BSFLL,2rq1rk1/1b1n1ppp/p1p1p3/1pR1N3/3P4/3BP3/PP3PPP/3Q1RK1 w - - 3 16,d3h7 g8h7 e5d7 d8d7,474,92,100,368,advantage hangingPiece middlegame short,https://lichess.org/N0UavizU#31
+BgzKu,r5k1/1p3pp1/p2N1n1p/3n1Q2/8/4r3/PP1q2BP/3RR2K w - - 8 29,d1d2 e3e1 f5f1 e1f1,486,88,78,204,advantage hangingPiece master middlegame short,https://lichess.org/AobVNwdJ#57
+C9gzn,r3q1k1/3b1ppp/3p1b2/p4n2/1p1P4/B1P2Q2/PP1N1PPP/4RBK1 b - - 1 19,e8e1 f3a8 e1e8 a8e8,581,98,95,475,advantage hangingPiece kingsideAttack middlegame short,https://lichess.org/qSvXa1Gy/black#38
+CDUXi,2r3k1/pp1b1pp1/7p/8/2BP4/P3rNbP/1P4P1/2R2RK1 w - - 0 23,c4f7 g8f7 c1c8 d7c8,596,86,74,213,advantage hangingPiece middlegame short,https://lichess.org/EGmaZVQw#45
+CDtVz,r2qr1k1/pp3pp1/2p3np/5pb1/3P4/1BP1Q2P/PP3PP1/R1B1R1K1 w - - 2 17,b3f7 g8f7 e3e8 d8e8,435,97,74,243,advantage hangingPiece middlegame short,https://lichess.org/TfN1cXkT#33
+CUQA1,r1b1k2r/ppppqppp/2n2n2/2b1p3/2P1P3/3P1NP1/PP3PBP/RNBQK2R b KQkq - 0 6,c5f2 e1f2,407,109,91,1192,advantage hangingPiece oneMove opening,https://lichess.org/2MDaV4cl/black#12
+CWdJU,2rq3b/1b1k4/p3pn1p/1pp1pnp1/8/P1NPB1Q1/BPP3PP/R4RK1 w - - 2 21,a2e6 d7e6 f1f5 e6f5,524,97,95,153,advantage hangingPiece master masterVsMaster middlegame short,https://lichess.org/A08PuF3P#41
+D8HiO,r2kr3/p4ppp/1p3q2/8/4R3/Q7/PPP1BPPP/4K2R w K - 1 20,a3d6 f6d6 e4e8 d8e8,501,102,95,922,crushing hangingPiece middlegame short,https://lichess.org/T7C4LX29#39
+DF23b,7r/4rkpn/p1pb1p1p/3p1N2/3P4/2P5/PP1NR1PP/4R1K1 b - - 7 23,d6h2 g1h2 e7e2 e1e2,517,96,81,567,crushing hangingPiece middlegame short,https://lichess.org/9Xgm0Oq0/black#46
+DUQHe,2k5/1ppr4/pn5r/5p2/1Q1q3p/1PR2B1R/2P2PP1/2K5 w - - 0 41,f3b7 c8b7 b4d4 d7d4,507,101,80,543,advantage hangingPiece middlegame short,https://lichess.org/vp1YtHRF#81
+DW2iU,5b1r/4nkpp/2r1pp2/1Q2p3/4P3/8/PP3PPP/2BR2K1 w - - 2 21,d1d7 c6c1 b5f1 c1f1,545,107,79,349,advantage hangingPiece kingsideAttack middlegame short,https://lichess.org/ZTIXTeLY#41
+Dpg6K,4r1k1/1br1np2/5B1p/p4Rp1/P3p3/1BP4P/2P3P1/3R2K1 w - - 6 27,b3f7 g8f7 f6e7 f7e7,572,93,96,902,advantage hangingPiece middlegame short,https://lichess.org/YkqtBtw8#53
+DtnpE,r3kb1r/ppp2ppp/2np3q/3Bp3/4P3/3P3Q/PPPN1PPP/R3K2R w KQkq - 6 12,d5f7 e8f7 h3h6 g7h6,576,105,77,203,advantage hangingPiece middlegame short,https://lichess.org/KKABk3HE#23
+EAbNy,2r2rk1/pbqn1ppp/1p1bp3/2pp4/3P3P/2PBPNB1/PP3PP1/R2QK2R w KQ - 0 13,d3h7 g8h7 g3d6 c7d6,585,100,56,126,advantage hangingPiece middlegame short,https://lichess.org/M0EqF0ge#25
+EBV4e,3r2k1/1p2ppbp/p4np1/1q3b2/3N4/Q1B1P1P1/PP3PBP/3R2K1 w - - 3 21,d4b5 d8d1 c3e1 d1e1,562,101,94,503,crushing hangingPiece kingsideAttack middlegame short,https://lichess.org/lsLMOV4A#41
+EEGHj,4k2r/r2n1ppp/p3pn2/8/2BP4/2Q1P3/1q3PPP/RN2K2R b KQk - 0 17,b2f2 e1f2,532,102,81,219,advantage hangingPiece middlegame oneMove,https://lichess.org/LYjmsEQV/black#34
+EQ00K,r1bqk2r/ppppnppp/2n5/4b3/2B1P3/2P2N2/PP3PPP/RNBQK2R w KQkq - 0 7,c4f7 e8f7 f3e5 c6e5,594,98,86,251,advantage hangingPiece opening short,https://lichess.org/H4lGigwK#13
+EohZM,1r1qk2r/1p2bppp/p1np4/3BpP2/8/3Q4/PPP2PPP/R1B2RK1 w k - 1 13,d5f7 e8f7,456,104,67,238,advantage hangingPiece middlegame oneMove,https://lichess.org/nJ65IDxC#25
+FUoao,3r2k1/1pqrnpp1/p4b1p/2pBp2P/1P6/P3P1P1/1BQR1P2/3R2K1 w - - 0 26,d5f7 g8f7 d2d7 d8d7 d1d7 c7d7,582,84,78,153,advantage hangingPiece long middlegame,https://lichess.org/VMMZFpCR#51
+G2Ok7,r1bqr1k1/ppp2ppp/2p2n2/2b5/4P3/1N5P/PPP2PP1/RNBQR1K1 b - - 2 10,c5f2 g1f2 d8d1 e1d1,402,113,79,441,advantage hangingPiece opening short,https://lichess.org/JXDtBlFC/black#20
+G2oyN,3rr1k1/pp5p/6pB/4pp2/3bq3/3R3P/PP1Q1PP1/3R2K1 b - - 2 20,e4d3 d2d3 d4f2 g1f2 d8d3 d1d3,465,88,81,157,advantage hangingPiece long master middlegame,https://lichess.org/CpxMLZnC/black#40
+Ga9FQ,5r2/p5kp/6r1/3p1Bq1/8/4PQb1/PP4R1/5RK1 b - - 2 29,g3h2 g1h2 g5g2 f3g2 g6g2 h2g2,471,90,68,209,crushing hangingPiece long middlegame,https://lichess.org/mpyInVPk/black#58
+HaHbI,r4rk1/1pb1qppp/p4n2/Q2p4/4pP2/1P4P1/PB1P1PBP/R3K2R w KQ - 2 19,a5c5 e7c5,503,100,83,838,crushing hangingPiece middlegame oneMove,https://lichess.org/qY7veoZ2#37
+HsrV5,r3k3/ppp1qp1p/2n1b1r1/8/2p2B2/2P2N2/P3QPPP/3R1RK1 b q - 0 15,g6g2 g1g2 e6h3 g2h3,530,102,95,901,crushing hangingPiece middlegame short,https://lichess.org/F3ImyhEk/black#30
+I5Gju,r2qr1k1/pbp2ppp/1p6/n2n4/8/B1PB1N2/P4PPP/R2QR1K1 w - - 0 15,d3h7 g8h7 e1e8 d8e8,544,101,73,349,crushing hangingPiece opening short,https://lichess.org/ClWGTsBC#29
+Ihht4,r3k2r/pppbbppp/1q6/3p4/Q3R3/4BP2/PPP3PP/RN4K1 w kq - 2 14,a4d7 e8d7 e4e7 d7e7,537,100,72,282,advantage hangingPiece middlegame short,https://lichess.org/aeZxQvJ0#27
+JtJsH,1k1r2r1/pp2qp1Q/3b4/7p/R7/1P2P3/1PP2PPP/3R2K1 b - - 3 22,d6h2 g1h2 g8g2 h2g2,599,101,77,473,advantage hangingPiece middlegame short,https://lichess.org/SFvnSf6g/black#44
+JtVnq,1k5r/1r1qb1pp/1p1p1p2/8/P1R5/1P2B3/2PQ2PP/5R1K w - - 1 30,c4g4 d7g4,581,89,85,910,advantage hangingPiece middlegame oneMove,https://lichess.org/xYz3BKkY#59
+K34fH,r1bqk2r/1pp2ppp/1bnp1n2/p7/P1BPP3/5N2/1P3PPP/RNBQ1RK1 w kq - 0 9,c4f7 e8f7,572,103,36,120,advantage hangingPiece oneMove opening,https://lichess.org/aCqHs05Q#17
+KdXkO,r1b1k2r/ppp1qpbp/5np1/4Q3/2B5/8/PPP2PPP/RNB1K2R w KQkq - 1 11,c4f7 e8f7 e5e7 f7e7,510,98,91,1123,crushing hangingPiece opening short,https://lichess.org/JgfFbQuH#21
+KhoMd,2kr3r/pp3Npp/1np2n2/8/8/P1Pb3P/2PB1PP1/R2KR3 b - - 0 18,d3c2 d1c2 d8d2 c2d2,458,94,100,392,advantage hangingPiece middlegame short,https://lichess.org/9mcHvecp/black#36
+Lfmjf,r1bqnrk1/pp1n1ppp/4p3/3pN3/3P1P2/1PPB4/3N1PPP/R2QK2R w KQ - 5 12,d3h7 g8h7,594,99,53,155,advantage hangingPiece oneMove opening,https://lichess.org/7cEBIWvl#23
+M5nYw,r3k2r/ppp2ppp/8/2qPP3/4n1b1/3B1P2/PP4KP/RN1Q1R2 b kq - 2 14,g4h3 g2h3 e4f2 f1f2,549,99,79,102,advantage hangingPiece middlegame short,https://lichess.org/6rGg5bfV/black#28
+MB7WY,r4r2/kp6/3R3p/p2Pn1p1/5pB1/8/PqPBQ1PP/2R4K w - - 1 28,d2a5 b2c1 e2d1 c1d1,510,86,100,316,advantage hangingPiece middlegame short,https://lichess.org/DcUfyFxU#55
+MKQDP,r6k/p5pp/1p2P3/6Q1/PbB2r2/2PP1qB1/3K3P/4R3 b - - 0 30,b4c3 d2c3 f4c4 c3c4,400,93,85,144,advantage hangingPiece middlegame short,https://lichess.org/yaZHDi2x/black#60
+N93eO,rnb1k2r/pp3pp1/5q1p/2bQ4/8/2N2N2/PP2PPPP/R3KB1R b KQkq - 0 9,c5f2 e1f2,462,98,84,375,advantage hangingPiece oneMove opening,https://lichess.org/FGok3yay/black#18
+NFVHd,2k4r/p1q4p/2p3p1/2Nbpp2/3r4/7Q/PPP2PPP/1K1RR3 b - - 0 21,d5a2 b1a2 d4d1 e1d1,500,101,72,265,advantage hangingPiece middlegame short,https://lichess.org/1Umwy6e7/black#42
+NSmG9,2r2rk1/bb3p1p/p4p2/8/NP1q4/P3pRPB/4P2P/2RQ2K1 w - - 2 24,d1d4 c8c1 d4d1 c1d1,592,81,80,226,crushing hangingPiece middlegame short,https://lichess.org/HFyfJgHg#47
+NZnEs,1rb2rk1/ppqn1ppp/3bp3/2pp4/3P1B2/2PBPN2/PP3PPP/R2QK2R w KQ - 0 11,d3h7 g8h7 f4d6 c7d6,578,89,100,601,advantage hangingPiece opening short,https://lichess.org/903Btkqr#21
+Nbon9,r3k2r/pbpp1q1p/1pn1p1B1/3n2pQ/3P3B/2P4P/PP3PP1/RN3RK1 b kq - 3 14,h7g6 h5h8 f7f8 h8f8,536,103,93,423,advantage hangingPiece middlegame short,https://lichess.org/N9ijc4nh/black#28
+NqQp4,1brqr1k1/pb3ppp/1p6/8/1B1p2B1/P2P3P/1P3PP1/2RQ1K1R b - - 3 18,b7g2 f1g2 c8c1 d1c1,550,101,78,279,advantage hangingPiece middlegame short,https://lichess.org/rBhqe7fT/black#36
+OPEV0,1k1r3r/p1pb2pp/2pB4/4p3/2n1p3/1NPR1N2/PP3PPP/2KR4 w - - 0 19,d6c7 b8c7 d3d7 d8d7 d1d7 c7d7,585,91,84,419,advantage hangingPiece long middlegame,https://lichess.org/2V8oBb0B#37
+OUBIX,2r2rk1/1p3ppp/p3p3/7P/b5P1/2qBQP2/P1P5/1K1RR3 w - - 1 21,d3h7 g8h7 e3c3 c8c3,500,92,71,109,advantage hangingPiece master middlegame short,https://lichess.org/ofU7Fr6X#41
+OciDY,2r3k1/p1B2b1p/1p1q1np1/8/8/1Q3B2/PP4PP/2R4K w - - 0 29,c7d6 c8c1 b3d1 c1d1,588,90,81,120,advantage hangingPiece middlegame short,https://lichess.org/gRvhBT8R#57
+OeYKg,4rrk1/pp3pp1/7p/8/2bqB3/4RP2/P1P3PP/R3Q2K w - - 0 24,e4h7 g8h7 e3e8 f8e8,592,91,73,294,crushing hangingPiece middlegame short,https://lichess.org/yU5gzqhu#47
+Oewhd,r1b1k2r/pp1qnppp/2pQ4/8/5Pn1/1BN5/PPP3PP/R1B1R1K1 w kq - 3 15,b3f7 e8f7 d6d7 c8d7,563,106,65,187,advantage hangingPiece opening short,https://lichess.org/tBBlKecc#29
+PkBGX,r2qr1k1/1p1n1ppp/p1pb4/7b/1P1PB3/P4N1P/5PP1/R1BQR1K1 w - - 1 16,e4h7 g8h7 e1e8 d8e8,434,104,78,372,advantage hangingPiece opening short,https://lichess.org/dAOd7Q3V#31
+Pxupv,3r4/pp2q1k1/2p5/3PppnR/2P1p1nR/1P2P3/P2N1PK1/Q7 w - - 0 34,h5g5 e7g5 h4g4 g5g4,579,99,72,257,crushing hangingPiece master middlegame short,https://lichess.org/HPYMCQBe#67
+Q15sw,2k1rr2/pp1q1p2/6p1/8/4pQ1P/3P2N1/PP3P1R/1K1R4 w - - 0 27,d3e4 d7d1 f4c1 d1c1,544,86,76,158,advantage hangingPiece middlegame queensideAttack short,https://lichess.org/elJFkIpc#53
+QH56q,r1bq1rk1/1pp2ppp/p1n2n2/2b1p3/B3P3/5N1P/PPP2PP1/RNBQR1K1 b - - 0 9,c5f2 g1f2 d8d1 e1d1,483,105,75,253,advantage hangingPiece opening short,https://lichess.org/3jeWlCDz/black#18
+RKl3Q,r2qr1k1/1pp2ppp/p1nb4/8/3PB1b1/P4N2/1P3PPP/R1BQR1K1 w - - 1 14,e4h7 g8h7 e1e8 d8e8,562,91,79,238,advantage hangingPiece opening short,https://lichess.org/UjwjGQhB#27
+RwHzA,rn2k2r/p2pbpp1/5q1p/2P1p3/2P4P/P2B1bN1/1B3QP1/R4K1R b kq - 1 18,f3g2 f1g2 f6f2 g2f2,526,96,90,201,advantage hangingPiece middlegame short,https://lichess.org/t3AcywyH/black#36
+SEZeH,2rr2k1/5pp1/p6p/5b2/3b4/8/PP1RNPPP/R1B3K1 b - - 4 25,d4f2 g1f2 d8d2 c1d2,486,103,94,944,crushing hangingPiece middlegame short,https://lichess.org/1QlLb7ws/black#50
+STixn,2rq2k1/pb1nrppp/1p1p4/2nP4/8/2N2N1P/PPB2PP1/R2QR1K1 w - - 0 20,c2h7 g8h7 e1e7 d8e7,445,106,72,456,advantage hangingPiece middlegame short,https://lichess.org/QhxzwrvJ#39
+SV87A,r1b2rk1/1p4pp/p2b4/2pP4/2P5/5P1P/PPB2KP1/R2QR2q b - - 6 23,d6g3 f2g3 h1e1 d1e1,581,101,89,789,advantage hangingPiece middlegame short trappedPiece,https://lichess.org/SwT8dhZI/black#46
+SrWxp,r5r1/1b3p1k/pb3p1p/1p2pN2/1P2P3/3q3P/3NQPP1/R3R1K1 b - - 5 22,g8g2 g1g2 d3e2 e1e2,594,102,79,371,advantage hangingPiece middlegame short,https://lichess.org/Vst9STem/black#44
+T1Y5o,1n5k/p5pp/4Q1b1/2qBp3/8/P2P3P/KP2P3/5rNR b - - 2 26,c5d5 e6d5 g6f7 d5f7,510,99,93,1602,advantage hangingPiece middlegame short,https://lichess.org/0Ge1xVzz/black#52
+TaXiI,r2qkb1r/2p2ppp/p1np1n2/1p2p3/4P1b1/1BP2N2/PP1P1PPP/RNBQR1K1 w kq - 2 9,b3f7 e8f7,512,111,65,169,advantage hangingPiece oneMove opening,https://lichess.org/vme1EACC#17
+UJGgJ,r3r1k1/1p1nqppp/4b3/p1ppP3/5P1P/2NB4/PPPQ2P1/2KR3R w - - 0 16,c3d5 e6d5 d3h7 g8h7,589,83,83,231,advantage hangingPiece middlegame short,https://lichess.org/pOvFTzGt#31
+UUYK1,5rk1/5p2/3pN1bQ/2p1p3/p1P5/P3B3/1r4PP/4qRK1 b - - 7 30,b2g2 g1g2 e1f1 g2f1,442,112,82,368,crushing hangingPiece master middlegame short,https://lichess.org/v8VHUC6f/black#60
+VzpN3,r1b1k2r/ppp1bppp/2n2n2/1Nq1p3/2B5/5N2/PPPP1PPP/R1BQR1K1 w kq - 8 9,c4f7 e8f7,582,104,79,129,advantage hangingPiece oneMove opening,https://lichess.org/1vNxDQIV#17
+WCr0k,r3r1k1/1b3p2/p1n2bpp/1p1p4/2pP4/NPP4P/P3NPP1/R2BR1K1 w - - 0 21,e2f4 e8e1,520,110,93,2437,crushing hangingPiece kingsideAttack middlegame oneMove,https://lichess.org/IEqbG6dd#41
+XwtsG,rnbq1rk1/p4ppp/1p1bp3/3p3n/3P4/2PB1NB1/PP1N1PPP/R2QK2R w KQ - 1 10,d3h7 g8h7 g3d6 d8d6,547,101,79,813,advantage hangingPiece opening short,https://lichess.org/Rk02mKS0#19
+XzIoY,3r1rk1/pp4p1/1q1b3p/5p1Q/4p3/2P1P2P/PP1R1NP1/3R2K1 b - - 1 24,d6h2 g1h2 d8d2 d1d2,483,101,97,1097,advantage hangingPiece middlegame short,https://lichess.org/dzD2J8sA/black#48
+YKzcy,r1bqr1k1/1p3pp1/p4n1p/2Ppb3/1P6/P1NB4/1B3PPP/R2QR1K1 b - - 1 17,e5h2 g1h2 e8e1 d1e1,595,98,71,155,crushing hangingPiece master opening short,https://lichess.org/x6L1mDe8/black#34
+YW5Cf,rn1qk2r/pp2bpp1/2p2p1p/7b/2BPN3/5P2/PPP1Q1PP/2KR2NR w kq - 1 11,e4d6 d8d6,538,108,78,868,advantage hangingPiece oneMove opening,https://lichess.org/ayzAVP8j#21
+YgQOp,r3k1r1/4Bp1p/2p3p1/2p1Pp2/3p4/1q1PnRQ1/P3N1PP/R5K1 w q - 0 22,a2b3 a8a1 e2c1 a1c1,591,95,97,379,advantage hangingPiece middlegame short,https://lichess.org/9cUhI8JU#43
+Z8fqk,r7/1pp4k/n2p4/p2P1qQ1/2P1r3/6RP/PP2B3/R3K3 b Q - 1 26,e4e2 e1e2 f5g5 g3g5,596,89,50,40,advantage hangingPiece master middlegame short,https://lichess.org/yF97diVB/black#52
+Z8tha,2kr2nr/ppp2ppp/2p5/2b1q3/4Q1P1/2P4P/PP1P1P2/RNB1R1K1 b - - 0 12,c5f2 g1f2 e5e4 e1e4,565,89,73,421,advantage hangingPiece middlegame short,https://lichess.org/0Djca0xh/black#24
+ZAO18,r1b2r1k/1p3p2/p5p1/3qb3/2Q5/3B4/PP3PPP/R1B2RK1 b - - 1 17,e5h2 g1h2 d5c4 d3c4,598,98,22,103,advantage hangingPiece middlegame short,https://lichess.org/UqrWaWWf/black#34
+ZIIQ6,r4rk1/2p2ppp/P3p3/2npP3/1Q1b3q/6P1/2P2P1P/1RB1KB1R b K - 0 19,d4f2 e1f2 h4b4 b1b4,585,96,82,1009,advantage hangingPiece middlegame short,https://lichess.org/QPoSWiQL/black#38
+ZOOyq,rn1q1rk1/3p1ppp/p1b1p3/6b1/3P1n2/2PB1N1P/RP2QPPB/1N3RK1 w - - 5 15,d3h7 g8h7 h2f4 g5f4,530,92,58,101,advantage hangingPiece middlegame short,https://lichess.org/zrPHFTYj#29
+ZgDGJ,2kr4/1pp1Rp1p/p6p/3B4/8/P1N2Nr1/1P3qbK/R2Q4 w - - 0 24,d5b7 c8b7 e7c7 b7c7,557,97,83,248,crushing hangingPiece middlegame short,https://lichess.org/BUtrIVF7#47
+a08rt,r2q1rk1/pp2bppp/2b1p3/2p1B3/3P4/2PB4/P1P2PPP/R2QR1K1 w - - 3 13,d3h7 g8h7 d1h5 h7g8 e5g7 g8g7,552,99,94,718,advantage hangingPiece long master middlegame,https://lichess.org/7koVVRf7#25
+aYyg3,2k2r2/1ppq1p2/p2p2Q1/3Pp2p/2P1P1bP/2N1b3/PP4P1/R3KR2 b Q - 0 20,f7g6 f1f8 d7d8 f8d8,552,93,90,1676,advantage hangingPiece middlegame queensideAttack short,https://lichess.org/7V5OdtUR/black#40
+aglJ4,r4k1r/pp4p1/1bn5/4p3/4Np1q/5B1b/PPPP1PPK/R1BQ3R b - - 1 16,h3g2 h2g2 h4h1 d1h1 h8h1 g2h1,573,89,100,342,advantage hangingPiece long middlegame,https://lichess.org/qiIavPKS/black#32
+agmaf,r1bqk2r/p4ppp/2pbpn2/6B1/2B5/8/PPP2PPP/RN1QR1K1 b kq - 3 11,d6h2 g1h2 d8d1 e1d1,565,99,81,217,crushing hangingPiece opening short,https://lichess.org/IeeVQmJc/black#22
+ay0Cb,3k1r1r/pp1n2p1/4R3/3Q1B2/3P4/2P3K1/Pq4P1/8 b - - 1 31,b2f2 g3f2 f8f5 d5f5,579,91,86,387,advantage hangingPiece middlegame short,https://lichess.org/BKoAFBnB/black#62
+b7JI0,2nq1rk1/1pR3bp/p3p1p1/Q2pPpn1/3P4/1P3NPP/P3BPK1/8 w - - 2 30,c7g7 g8g7 a5d8 f8d8,592,87,100,159,advantage hangingPiece middlegame short,https://lichess.org/IGwqszdg#59
+bVt4v,r1b1k2r/pp2qpp1/7p/8/1nB5/5N2/PP2QPPP/R3K2R w KQkq - 2 14,c4f7 e8f7 e2e7 f7e7,543,98,90,346,advantage hangingPiece middlegame short,https://lichess.org/NgkFpm8f#27
+bhXCl,5r2/1b1nkr2/p7/1pp1P3/6P1/4PN1P/PP2KR2/5R2 b - - 0 23,d7e5 f3e5 f7f2 f1f2 f8f2 e2f2,593,85,100,153,advantage hangingPiece long middlegame,https://lichess.org/FoKrqlGC/black#46
+cAhFJ,1k1r3r/p1p2p2/1p1b4/3Q3p/P1PP4/1P3PP1/1B2qRK1/R7 b - - 1 24,e2f2 g2f2 d6g3 f2g3,509,100,97,607,advantage hangingPiece middlegame short,https://lichess.org/JVfWc1ST/black#48
+cBqgL,1r2k2r/1p3ppp/p3b3/q1b1Q3/1n6/2N2NP1/PP2PPBP/2R1K2R b Kk - 1 20,c5f2 e1f2 a5e5 f3e5,460,102,78,502,advantage hangingPiece middlegame short,https://lichess.org/r08AIadQ/black#40
+cOMs4,r1bqk2r/ppp3p1/3b1n2/6Bp/2B1p3/8/PPP2PPP/RN1QR1K1 b kq - 1 10,d6h2 g1h2 d8d1 e1d1,541,104,85,183,advantage hangingPiece opening short,https://lichess.org/ENkcFAxO/black#20
+cZZKh,2k2r2/ppp3pp/8/2bNq1p1/5r2/1Q5P/PPP3P1/3RR2K b - - 0 21,e5e1 d1e1 f4f1 e1f1,544,94,81,201,advantage hangingPiece middlegame short,https://lichess.org/eF0pwgPa/black#42
+cfdAo,r1bqk2r/p3pp1p/5bpB/2nQ4/8/5NN1/PP3PPP/2KR3R b kq - 0 16,f6b2 c1b2 d8d5 d1d5,440,96,95,459,advantage hangingPiece middlegame short,https://lichess.org/QeTeEBPr/black#32
+cw0JL,3rr1k1/p3Bppp/2pQ1n2/8/8/6R1/PqP2PPP/4R1K1 w - - 1 25,g3g7 g8g7 d6d8 e8d8,541,95,78,542,crushing hangingPiece middlegame short,https://lichess.org/of46hix2#49
+d7Dqo,r1bq1rk1/pp3ppp/2nbp3/3p3n/3P4/2PB1NB1/PP1N1PPP/R2Q1RK1 w - - 4 11,d3h7 g8h7 g3d6 d8d6,577,100,94,826,advantage hangingPiece opening short,https://lichess.org/LS1D0cd7#21
+dv1kk,r2q2k1/pp3p1p/4rnp1/2pp1p2/2P5/3QPN1P/PP3PP1/3R1RK1 b - - 0 16,d5c4 d3d8 a8d8 d1d8,528,93,86,1140,crushing hangingPiece kingsideAttack middlegame short,https://lichess.org/rnMFyVEn/black#32
+e0QxS,rnb2rk1/pp3ppp/2p1p3/q7/1bPPB3/7N/PP1B1PPP/R2QK2R w KQ - 5 11,e4h7 g8h7 d2b4 a5b4,581,105,76,480,advantage hangingPiece opening short,https://lichess.org/qdaj3Tva#21
+eTJiE,4rrk1/p1p3pp/2p5/1p1q1p2/2Pb1B2/1P1Q1PNb/P4P1P/2RR2K1 b - - 0 21,e8e1 d1e1 d4f2 g1f2,554,101,85,994,advantage hangingPiece middlegame short,https://lichess.org/ZrxyRRcZ/black#42
+ep6BM,Q6r/1pk4q/p1p5/2B3r1/3P2p1/8/PP4RP/4R1K1 w - - 8 35,c5b6 c7b6 a8h8 h7h8,598,98,76,413,crushing hangingPiece middlegame short trappedPiece,https://lichess.org/Gz4JcbDU#69
+extN9,r4qk1/bpp3p1/3p1r1p/3Pp3/1PP1P3/R4NNb/5P1P/R2Q2K1 b - - 7 23,a7f2 g1f2 a8a3 a1a3,593,83,100,205,advantage hangingPiece middlegame short,https://lichess.org/10AJiNrh/black#46
+fGcKq,r3k2r/p3qppp/2p2n2/2b5/8/8/PPP1QPPP/RNB1K2R b KQkq - 0 12,c5f2 e1f2 e7e2 f2e2,473,106,96,569,advantage hangingPiece middlegame short,https://lichess.org/VtJ4nxQ7/black#24
+fWKNL,2r2rk1/pp1n2p1/4p2p/2bpP3/8/1P3N2/P2N1PPP/2R1R1K1 b - - 1 20,c5f2 g1f2 c8c1 e1c1,549,92,78,447,advantage hangingPiece master middlegame short,https://lichess.org/C3kMOAEd/black#40
+fc9y1,r3kb1r/pppbnppp/2n5/1B2P3/3N4/8/PPP2PPP/R1BNK2R w KQkq - 5 10,f2f4 c6d4 b5d7 e8d7,573,98,80,1110,crushing hangingPiece opening short,https://lichess.org/AJJTFw38#19
+flyOO,r1b1kb1r/pp2pppp/2n2n2/8/2Bq1B2/2N5/PP3PPP/R2QK1NR w KQkq - 0 8,c4f7 e8f7 d1d4 c6d4,485,93,85,319,advantage hangingPiece opening short,https://lichess.org/Vmf36f5l#15
+frD06,1k1r1b1r/ppp1ppp1/8/7p/3q1BQ1/3P4/PPP3PP/R4R1K w - - 0 16,f4c7 b8c7 g4d4 d8d4,589,92,81,132,crushing hangingPiece middlegame short,https://lichess.org/x02PYUXc#31
+gT1oC,r2qr1k1/1b3ppp/p1nb4/1p6/2pPB3/5N1P/PP3PP1/R1BQR1K1 w - - 3 16,e4h7 g8h7 e1e8 d8e8,569,86,100,622,advantage hangingPiece opening short,https://lichess.org/gaT9kxVI#31
+hb68l,r4rk1/1pqb1ppp/2nbp3/3p4/p2P4/2PB1NB1/PP2QPPP/R3K2R w KQ - 0 14,d3h7 g8h7 g3d6 c7d6,548,97,76,757,advantage hangingPiece middlegame short,https://lichess.org/u7BzfnkO#27
+i4Nv0,2kr3r/ppp2ppp/2pbb3/8/2P5/1P6/P3BPPP/R1BR2K1 b - - 0 13,d6h2 g1h2 d8d1 e2d1,540,92,70,284,crushing hangingPiece middlegame short,https://lichess.org/hvUoonnM/black#26
+i9WYs,r1bq1rk1/pp1nbppp/4p3/3pP1B1/8/3B4/PPP2PPP/RN1QR1K1 w - - 1 11,d3h7 g8h7 g5e7 d8e7,588,96,73,141,advantage hangingPiece opening short,https://lichess.org/rnZN11zR#21
+irV1i,r2q1rk1/pp1b2pp/2p1p3/3pP3/8/2PBPR2/P1P3PP/R2Q2K1 w - - 1 15,d3h7 g8h7 f3f8 d8f8,490,91,100,353,advantage hangingPiece middlegame short,https://lichess.org/pFdW4L6B#29
+j3uGL,r1b1k2r/pp1nppb1/2p4p/2q1P1p1/2BQ2n1/2N2NB1/P1P2PPP/1R2K2R w Kkq - 3 14,c4f7 e8f7 d4c5 d7c5,592,95,80,190,advantage hangingPiece master masterVsMaster middlegame short,https://lichess.org/VdwIohAM#27
+j6tH2,2r1r1k1/1pq2ppp/p1n1b3/2bpQ3/8/2NB1N2/PPP2PPP/R3R1K1 w - - 4 16,d3h7 g8h7 e5c7 c8c7,501,99,79,124,advantage hangingPiece middlegame short,https://lichess.org/2VATAFF1#31
+jJK5a,r1b1r1k1/1pp1qppp/8/p3b3/4Q3/3BB3/PPP2PPP/2KRR3 b - - 3 15,e5b2 c1b2 e7e4 d3e4,578,91,98,603,advantage hangingPiece middlegame short,https://lichess.org/Y0bHBwQN/black#30
+jSg1B,2b1r1k1/1p2Bpp1/p4n1p/3P4/8/P4P1P/1P1bN1P1/2R1R1K1 b - - 0 29,e8e7 c1c8 e7e8 c8e8,574,96,95,1156,crushing hangingPiece kingsideAttack middlegame short,https://lichess.org/ODRx1mSW/black#58
+k3MlW,3qr1k1/p4p1p/Pp3np1/1brB4/8/6P1/1P1QPP1P/R1B1R1K1 w - - 2 21,d5f7 g8f7 d2d8 e8d8,487,103,84,291,crushing hangingPiece middlegame short,https://lichess.org/HSHjDZtN#41
+kEc2Z,rn2k3/ppp3qp/3p2pB/4Pr2/3P4/2N4Q/PPP4K/R7 b q - 1 18,g7h6 h3h6 f5h5 h6h5,576,87,100,261,advantage hangingPiece middlegame short,https://lichess.org/5IHQcPcW/black#36
+lIL7l,6k1/2p2rpp/rb1pb3/p2Np3/4B3/P7/1PP3PP/1K1R1R2 w - - 8 22,e4h7 g8h7 f1f7 e6f7,581,85,100,110,advantage hangingPiece middlegame short,https://lichess.org/fxHKshc4#43
+laOMd,rn4k1/6b1/pp1p1rRp/2pP1qnP/P1P2B2/8/1PQ1B3/2K4R w - - 0 27,g6g7 g8g7 c2f5 f6f5,599,103,37,101,advantage hangingPiece middlegame short,https://lichess.org/rzxXjRHv#53
+mSmhc,r1b2rk1/1pR3np/p3p1p1/6N1/2B5/8/PPP3PP/5RK1 w - - 1 21,c7g7 g8g7 f1f8 g7f8,588,98,81,255,advantage hangingPiece middlegame short,https://lichess.org/NmxO2Cer#41
+moj23,r1bbk2r/p1pn1pp1/2p4p/4P3/2B5/2N5/PPP3PP/R1B1K2R w KQkq - 1 12,c4f7 e8f7 e5e6 f7e6,500,90,87,725,advantage hangingPiece middlegame short,https://lichess.org/sMbO9pUh#23
+n8rvJ,rnbqr1k1/pp3ppp/5b2/2p5/3NB3/2P5/PP3PPP/R1BQR1K1 w - - 0 13,e4h7 g8h7 e1e8 d8e8,552,96,85,995,crushing hangingPiece master opening short,https://lichess.org/Ats4sfIz#25
+o5cZ3,4R3/1rk1bBr1/p2p4/2pPpQN1/nqp1P3/2N1BP2/PPR5/1K6 w - - 1 35,f5d7 c7d7 e8e7 d7e7,548,87,100,176,advantage hangingPiece middlegame short,https://lichess.org/TLfAwbff#69
+o6K4U,rnb1k2r/pp2bppp/3q4/2pB4/8/2P2N2/PP3PPP/R1BQ1K1R w kq - 1 12,d5f7 e8f7 d1d6 e7d6,568,99,58,519,advantage hangingPiece opening short,https://lichess.org/jMvrKLL8#23
+oH2PA,rn1qk1nr/ppp2ppp/1b1p4/8/2BPPBb1/5N2/PPP3PP/RN1QK2R w KQkq - 2 7,c4f7 e8f7,597,102,56,93,advantage hangingPiece oneMove opening,https://lichess.org/BgBKM2tn#13
+odzlV,r1bq3r/pp3kpB/4pp2/2Pp3R/1P1P4/P7/3Q1PPP/R5K1 w - - 1 20,h7g6 f7g6 h5h8 d8h8,580,95,79,506,advantage hangingPiece middlegame short,https://lichess.org/phL5uTj2#39
+pEREl,r3k2r/pp1bbppp/4pn2/q2pN3/1n1P1B2/P1NBP3/1PQ2PPP/R3K2R w KQkq - 2 12,a3b4 a5a1 c2b1 a1b1,536,93,78,836,advantage hangingPiece middlegame short,https://lichess.org/x5Kpmhkt#23
+pGQ7s,1k1r1b1r/ppp2ppp/4bq2/3p4/4Q3/1P2PN2/PBP1BPPP/2KR1R2 b - - 0 13,f6b2 c1b2 f8a3 b2a3,522,101,97,863,advantage hangingPiece middlegame short,https://lichess.org/r9BIQmEr/black#26
+plYJT,rn2k1nr/ppp2ppp/3p4/2b1p2q/4P1b1/2P2NP1/PP1PBP1P/RNBQR1K1 b kq - 4 10,c5f2 g1f2,511,102,72,368,advantage hangingPiece oneMove opening,https://lichess.org/rZfHWSkE/black#20
+q1OJ7,r1bq1rk1/2p2ppp/p1n2n2/1pb1p3/4P3/1B3N1P/PPP2PP1/RNBQR1K1 b - - 0 10,c5f2 g1f2 d8d1 e1d1,582,102,78,373,advantage hangingPiece opening short,https://lichess.org/QWym9Yu5/black#20
+qRvwv,r7/1p2kn1p/p3bnp1/3p1pB1/8/3B4/P1PK2PP/4RR2 w - - 4 23,e1e6 e7e6 g5f6 e6f6,428,96,88,843,advantage hangingPiece middlegame short,https://lichess.org/tsnLbkVY#45
+qkpfm,4r2k/pR3Q2/2p4p/B1P1bqp1/3p4/3P1pPP/P3rP1K/5R2 b - - 4 32,e5g3 h2g3 f5f7 b7f7,580,87,79,370,crushing hangingPiece master middlegame short,https://lichess.org/XOjMxZ9d/black#64
+rpdzr,r2q2k1/pp1nrppp/8/3p3b/3P4/3B1N1P/PP3PP1/R2QR1K1 w - - 0 15,d3h7 g8h7 e1e7 d8e7,599,91,77,650,advantage hangingPiece master middlegame short,https://lichess.org/nZQ5kIlp#29
+rtV4L,r4rk1/4bppp/pq2p3/1p1bB3/5P2/P2B3P/1PP1Q1PK/R2R4 w - - 0 19,d3h7 g8h7 e2h5 h7g8 e5g7 g8g7,550,99,82,563,crushing hangingPiece long middlegame,https://lichess.org/W18afBJj#37
+rwMyN,r1b1r2k/1p1p1qp1/1bp4p/pn6/3P4/1BPQ4/PP3PPP/R1B1R1K1 w - - 0 20,b3f7 e8e1 d3f1 e1f1,558,98,75,169,advantage hangingPiece kingsideAttack middlegame short,https://lichess.org/jdvpZ65C#39
+rxMOb,r1bq1rk1/1ppnbppp/p3p3/4P1B1/8/3B4/PPP2PPP/RN1QR1K1 w - - 1 12,d3h7 g8h7 g5e7 d8e7,581,91,88,1048,advantage hangingPiece master opening short,https://lichess.org/JUgFm9RG#23
+sAvds,3r1rk1/p4pp1/1p2pq1p/5n2/2Bb2Q1/P7/1P3PPP/2BRR1K1 b - - 1 22,d4f2 g1f2 d8d1 e1d1,588,91,83,446,advantage hangingPiece middlegame short,https://lichess.org/Mb4DhvCU/black#44
+sS9Q6,r1b1k2r/p2pqppp/2p5/4Q3/2B1n3/8/PPP2PPP/R1B1K2R w KQkq - 1 11,c4f7 e8f7 e5e7 f7e7,501,94,85,940,advantage hangingPiece middlegame short,https://lichess.org/Vw86kMoS#21
+spqLU,2qrr1k1/pp1b1p1p/2p2pp1/8/2PP1b1N/3Q3P/PP3PP1/1B1RR1K1 b - - 1 20,f4h2 g1h2 e8e1 d1e1,573,85,100,491,advantage hangingPiece middlegame short,https://lichess.org/PSRGVuCh/black#40
+stZZs,r2q1rk1/3b1ppp/p1n1pb2/1p1pN3/3P4/2PB2N1/PP3PPP/R2QR1K1 w - - 0 15,d3h7 g8h7 e5d7 d8d7,598,89,43,53,advantage hangingPiece middlegame short,https://lichess.org/hK9ffOfx#29
+tDwPT,3r3k/1p3pp1/p1n1bq1p/8/2p1NP2/P3QP2/BPP4P/1K1R4 w - - 1 23,e4f6 d8d1 e3c1 d1c1,580,98,66,198,advantage hangingPiece middlegame queensideAttack short,https://lichess.org/P04TPkpo#45
+uEIOe,r1bqkb1r/ppp2pp1/2n2n1p/4p3/2B1P3/5N2/PPP2PPP/RNBQ1RK1 w kq - 0 7,c4f7 e8f7 d1d8 c6d8,594,89,100,481,advantage hangingPiece opening short,https://lichess.org/rJC5iXUJ#13
+v38Km,N2qkr2/1pp5/p2pp1pp/4p3/1P1bP3/P2P1Q1P/2P2PP1/1RB2nK1 w - - 1 18,a8c7 d8c7 f3f8 e8f8,582,94,72,375,crushing hangingPiece middlegame short,https://lichess.org/wlmCV5OL#35
+vJHVy,2rr2k1/1p1qbppp/p1n3B1/8/6P1/P1p1PP1P/1P1Q3N/2R2RK1 w - - 0 23,g6f7 g8f7 d2d7 d8d7,569,103,83,230,advantage hangingPiece middlegame short,https://lichess.org/GWpvTddT#45
+vp1eb,r1n1Rrk1/1pp3p1/p6p/6PQ/3q4/2N4P/PP3P1K/R1B5 w - - 2 20,h5f7 g8f7 e8f8 f7f8,591,100,80,247,crushing hangingPiece middlegame short,https://lichess.org/TVz9DENd#39
+vrAqB,r4r1k/bbpQqpp1/p6p/1p2P3/5B2/1N6/PPP2PPP/3RR1K1 b - - 0 18,a7f2 g1f2 e7d7 d1d7,599,94,83,157,advantage hangingPiece middlegame short,https://lichess.org/GEyS8zYv/black#36
+w2lxQ,r1bqr1k1/p1p2ppp/2p2n2/8/4p3/BBP2P2/P1P3PP/R2QK2R w KQ - 0 12,b3f7 g8f7 d1d8 e8d8,599,89,75,100,crushing hangingPiece middlegame short,https://lichess.org/IVZbnijf#23
+wKWi1,r4rk1/ppp2pbp/2q3p1/n2N4/4PP2/P2PB2P/1PQ5/2KR3R b - - 4 18,g7b2 c1b2 c6c2 b2c2,576,103,76,144,crushing hangingPiece middlegame short,https://lichess.org/Y841hdpm/black#36
+wPOrT,r2rq2k/6pp/3b4/pQ3p2/N2BpPb1/P3P3/2P2KP1/R6R w - - 3 27,h1h7 h8h7 b5e8 d8e8,537,100,60,160,crushing hangingPiece middlegame short,https://lichess.org/RUEZnPAY#53
+wpxyl,r4rk1/p4pp1/2pbp2p/3p4/3N1P2/2PPqR1b/PP4P1/RN1Q3K b - - 1 16,h3g2 h1g2 e3f4 f3f4,575,102,90,443,advantage hangingPiece middlegame short trappedPiece,https://lichess.org/VXdelGWe/black#32
+xQyMc,rr3k2/6p1/1q1bQ2p/3p4/1P6/p1P1R3/P4PPP/1R4K1 b - - 2 25,d6h2 g1h2 b6e6 e3e6,548,95,88,1146,advantage hangingPiece middlegame short,https://lichess.org/7pJUXA80/black#50
+xjRS2,r1b3r1/pp1q3k/2p5/3p2BP/8/P1NP2Q1/BPP3K1/R7 b - - 0 28,g8g5 g3g5 d7g4 g5g4,525,98,50,64,advantage hangingPiece middlegame short,https://lichess.org/ijXeioWq/black#56
+y6e0g,r4r1k/pp3pp1/1b6/4R2q/1P6/P1Q2bP1/3B1P1P/2R3K1 b - - 3 28,b6f2 g1f2 h5h2 f2f3,585,94,71,159,advantage hangingPiece middlegame short,https://lichess.org/yh506GRg/black#56
+yDeJd,r1b1k2r/pppp1ppp/2n2n2/2b1p1B1/2B1P1q1/3P1Q1N/PPP2PPP/RN2K2R w KQkq - 7 7,c4f7 e8f7 f3g4 f6g4,500,98,60,277,advantage hangingPiece middlegame short,https://lichess.org/5dJ0vbYz#13
+yeNbg,4rk2/1rb3p1/5pq1/p1pP3p/2P1BP2/P5PP/1B2R1K1/4R3 b - - 3 37,c7f4 e4g6 e8e2 e1e2 b7b2 e2b2,595,91,82,99,crushing hangingPiece long middlegame,https://lichess.org/hTrspKkp/black#74
+yhy8s,r1bqr1k1/2p2ppp/p1n5/1pbn4/3p4/2P2N1P/PPB2PP1/RNBQR1K1 w - - 0 14,c2h7 g8h7 e1e8 d8e8,526,98,73,136,advantage hangingPiece opening short,https://lichess.org/EJ0vjtCx#27
+z1HlA,rnb1k1r1/ppppqpP1/1b6/6p1/2B5/2P2N2/P3Q1PP/RN3K1R w q - 3 13,c4f7 e8f7 e2e7 f7e7,572,101,79,245,crushing hangingPiece opening short,https://lichess.org/Cr4Y5aXy#25
+zgKsv,r2q1rk1/1p3ppp/p1nnb3/2pp4/5B2/2PBPN2/PP3PPP/R2Q1RK1 w - - 0 13,d3h7 g8h7 f4d6 d8d6,502,92,79,265,advantage hangingPiece middlegame short,https://lichess.org/BrTxzmeK#25`,
+  },
 ];
