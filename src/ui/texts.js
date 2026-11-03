@@ -18,6 +18,14 @@ const Texts = (function () {
     bodenMate: 'мат Бодена', dovetailMate: 'мат «ласточкин хвост»', doubleBishopMate: 'мат двумя слонами',
   };
 
+  // Mate patterns as a noun phrase (nominative, masculine) for the cat's praise.
+  const MATE_NAMES = {
+    backRankMate: 'мат на последней горизонтали', smotheredMate: 'спёртый мат', anastasiaMate: 'мат Анастасии',
+    arabianMate: 'арабский мат', hookMate: 'мат крюком', bodenMate: 'мат Бодена', dovetailMate: 'мат «ласточкин хвост»',
+    doubleBishopMate: 'мат двумя слонами', mate: 'мат',
+  };
+  const mateName = p => { const k = Object.keys(MATE_NAMES).find(t => p.themes.includes(t)); return k ? MATE_NAMES[k] : null; };
+
   const MATE_FIRST = ['backRankMate', 'smotheredMate', 'anastasiaMate', 'arabianMate', 'hookMate', 'bodenMate', 'dovetailMate', 'doubleBishopMate'];
   function themeTag(p) {
     const k = MATE_FIRST.concat(Object.keys(THEMES)).find(t => p.themes.includes(t));
@@ -54,9 +62,15 @@ const Texts = (function () {
     guideWrong: () => 'Не туда! Ходи по зелёной стрелочке.',
     hint1: (piece, left) => `Подсказка: ходи ${PIECE_ACC[piece]}. 👆` + (left === 1 ? ' Осталась последняя попытка.' : ''),
     hint2: () => 'Вот сюда! Сделай этот ход.',
-    done: kind => (kind === 'clean' ? pick(['Мур-р-р! Без единой ошибки!', 'Чистое решение! Мур!'])
-      : kind === 'mistakes' ? pick(['Получилось! Задача решена.', 'Есть мат! В следующий раз — без ошибок.'])
-      : 'Вот так ставится мат! Запомни этот приём.'),
+    /** Praise after a puzzle; names the pattern when it is a known mate. */
+    done: (kind, p) => {
+      const m = p && mateName(p), tag = p && themeTag(p);
+      if (m) return kind === 'clean' ? pick([`Мур-р! Отличный ${m}!`, `Чистый ${m}! Мур!`])
+        : kind === 'mistakes' ? pick([`Есть ${m}!`, `Получилось: ${m}!`])
+        : `Вот так ставится ${m}. Запомни!`;
+      const extra = tag ? ` Приём: ${tag}.` : '';
+      return (kind === 'clean' ? 'Мур-р-р! Без единой ошибки!' : kind === 'mistakes' ? 'Получилось! Задача решена.' : 'Вот как надо. Запомни!') + extra;
+    },
     replay: () => 'Смотри внимательно…',
     replayDone: () => 'Запомни этот приём — он ещё пригодится!',
     lessonDone: () => 'Урок пройден! Все очки собраны. Мур!',

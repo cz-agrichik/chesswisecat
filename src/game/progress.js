@@ -3,8 +3,12 @@
    edited). Saved in localStorage and, when the page runs as a claude.ai artifact,
    synced through the artifact database. */
 const Progress = (function () {
-  const AVATARS = ['🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐰', '🐨', '🦄', '🐙', '🐧'];
-  const AVNAMES = ['Лисёнок', 'Медвежонок', 'Панда', 'Тигрёнок', 'Львёнок', 'Лягушонок', 'Обезьянка', 'Зайчик', 'Коала', 'Единорог', 'Осьминожка', 'Пингвин'];
+  // Who the child can be: heroes, magic folk, animals, things. 6 per row in the picker.
+  const AVATARS = ['🦸', '🧙', '🧑‍🚀', '🥷', '🧚', '🧜', '🤖', '👑', '🦉', '🐬', '🦄', '🐉', '🦖', '🐱', '🐶', '🚀', '🌈', '⚡'];
+  const AVNAMES = ['Супергерой', 'Волшебник', 'Космонавт', 'Ниндзя', 'Фея', 'Русалка', 'Робот', 'Корона', 'Сова', 'Дельфин', 'Единорог', 'Дракон', 'Динозавр', 'Котёнок', 'Щенок', 'Ракета', 'Радуга', 'Молния'];
+  // Avatars from earlier versions stay valid until the player picks a new one.
+  const LEGACY_AVATARS = ['🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐰', '🐨', '🐙', '🐧'];
+  const validAvatar = a => AVATARS.includes(a) || LEGACY_AVATARS.includes(a);
   const SCHEMA = 2;
   const NAME_MAX = 14;
   const S = { players: [], currentId: null, muted: !CONFIG.soundOnByDefault };
@@ -17,7 +21,7 @@ const Progress = (function () {
 
   function fresh(id, name, avatar, now = Date.now()) {
     return {
-      id, v: SCHEMA, name: cleanName(name) || 'Игрок', avatar: AVATARS.includes(avatar) ? avatar : AVATARS[0],
+      id, v: SCHEMA, name: cleanName(name) || 'Игрок', avatar: validAvatar(avatar) ? avatar : AVATARS[0],
       rating: CONFIG.rating.start, bestRating: CONFIG.rating.start,
       points: 0, played: 0, clean: 0, best: {}, recent: [], lesson: null, lessonsDone: 0,
       createdAt: now, updatedAt: now,

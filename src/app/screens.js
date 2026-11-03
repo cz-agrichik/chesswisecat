@@ -113,7 +113,7 @@ const App = (function () {
       <button class="btn wide" data-start></button>
       <div class="card vcard">
         <div class="vgrid"></div>
-        <div class="legend"><span><i class="vc c2">★★</i> без ошибок</span><span><i class="vc c1">★</i> с ошибками</span><span><i class="vc c0">👀</i> по стрелочкам</span><span><i class="vc"></i> ещё не было</span></div>
+        <div class="legend"><span><i class="vc c2">★★</i> без ошибок</span><span><i class="vc c1">★</i> с ошибками</span><span><i class="vc c0">🌱</i> по стрелочкам</span><span><i class="vc"></i> ещё не было</span></div>
       </div>
     </section>`);
     el.querySelector('h1').textContent = vol.title;
@@ -122,7 +122,7 @@ const App = (function () {
     vol.puzzles.forEach((z, i) => {
       const b = pl.best[z.id];
       const cls = b === undefined ? '' : b >= P.clean ? 'c2' : b >= P.withMistakes ? 'c1' : 'c0';
-      const c = h(`<span class="vc ${cls}">${b === undefined ? '' : b >= P.clean ? '★★' : b >= P.withMistakes ? '★' : '👀'}</span>`);
+      const c = h(`<span class="vc ${cls}">${b === undefined ? '' : b >= P.clean ? '★★' : b >= P.withMistakes ? '★' : '🌱'}</span>`);
       c.title = `Задача ${i + 1}`;
       grid.append(c);
     });
@@ -227,18 +227,17 @@ const App = (function () {
     setTimeout(() => {
       if (screen !== 'play' || !session || session.z !== z) return;
       if (kind !== 'shown') { UI.sound.win(); UI.confetti(kind === 'clean' ? 110 : 50); UI.vibrate(40); }
-      say(rec.lessonDone ? T.cat.lessonDone() : T.cat.done(kind));
-      const tag = T.themeTag(z);
+      say(rec.lessonDone ? T.cat.lessonDone() : T.cat.done(kind, z));
       const dCls = rec.delta > 0 ? 'up' : rec.delta < 0 ? 'down' : '';
+      const badge = kind === 'shown'
+        ? '<span class="sprout" aria-hidden="true">🌱</span>'
+        : Array.from({ length: rec.points }, () => UI.star('on')).join('');
       const sh = $('#sheet');
-      sh.innerHTML = `<h2 class="${kind === 'shown' ? 'calm' : ''}">${kind === 'clean' ? 'Ура!' : kind === 'mistakes' ? 'Решено!' : 'Вот как надо'}</h2>
-        <div class="starrow" aria-label="${T.points(rec.points)}">${Array.from({ length: CONFIG.points.clean }, (_, i) => UI.star(i < rec.points ? 'on' : 'off')).join('')}</div>
-        <div class="gains">
-          <div class="gain-box"><b>+${rec.points}</b><small>${T.plural(rec.points, 'очко', 'очка', 'очков')}</small></div>
-          <div class="gain-box ${dCls}"><b>${T.signed(rec.delta)}</b><small>рейтинг: ${rec.rating}</small></div>
+      sh.innerHTML = `<div class="res-row">
+          <div class="starrow ${kind}" role="img" aria-label="${kind === 'shown' ? 'Решение разобрано' : '+' + T.points(rec.points)}">${badge}</div>
+          <div class="res-rating"><small>рейтинг</small><b>${rec.rating}</b><em class="${dCls}">${T.signed(rec.delta)}</em></div>
         </div>
-        ${tag ? `<span class="tag">Приём: ${esc(tag)}</span>` : ''}
-        <div class="row2" style="margin-top:14px">${kind === 'shown' ? '<button class="btn ghost" data-replay>Показать ещё раз</button>' : ''}<button class="btn" data-next>${rec.lessonDone ? 'Итоги урока' : 'Следующая задача'}</button></div>`;
+        <div class="row2">${kind === 'shown' ? '<button class="btn ghost" data-replay>Ещё раз</button>' : ''}<button class="btn" data-next>${rec.lessonDone ? 'Итоги урока' : kind === 'shown' ? 'Дальше' : 'Следующая задача'}</button></div>`;
       sh.querySelectorAll('.starrow .on').forEach((s, i) => { s.style.animationDelay = (i * 0.18) + 's'; });
       sh.hidden = false; $('#tools').hidden = true;
       sh.querySelector('[data-next]').onclick = () => (rec.lessonDone ? finishLesson(rec.lessonDone) : loadPuzzle());
@@ -302,7 +301,7 @@ const App = (function () {
     let av = p ? Math.max(0, Progress.AVATARS.indexOf(p.avatar)) : 0;
     const el = h(`<form autocomplete="off"><h2>${p ? 'Изменить игрока' : 'Новый игрок'}</h2>
       <label class="field">Имя<input name="nm" maxlength="${Progress.NAME_MAX}" placeholder="Например, Маша" enterkeyhint="done"></label>
-      <p class="field" style="margin:0">Выбери зверька</p>
+      <p class="field" style="margin:0">Кем ты будешь?</p>
       <div class="avs">${Progress.AVATARS.map((a, i) => `<button type="button" class="avb ${i === av ? 'on' : ''}" data-i="${i}" aria-label="${Progress.AVNAMES[i]}">${a}</button>`).join('')}</div>
       <button class="btn wide" type="submit">${p ? 'Сохранить' : 'Готово'}</button></form>`);
     if (p) el.nm.value = p.name;

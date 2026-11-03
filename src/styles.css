@@ -327,8 +327,8 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
   color: var(--text); background: var(--paper-2); border: 3px solid var(--ink); border-radius: 14px;
 }
 .field textarea { font-size: .85rem; font-weight: 500; font-family: ui-monospace, Menlo, monospace; min-height: 110px; resize: vertical; }
-.avs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 6px 0 18px; }
-.avb { aspect-ratio: 1; font-size: 30px; line-height: 1; border-radius: 16px; background: var(--paper-2); border: 3px solid transparent; }
+.avs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin: 6px 0 18px; }
+.avb { min-width: 0; padding: 0; aspect-ratio: 1; display: grid; place-items: center; font-size: clamp(22px, 6.5vw, 30px); line-height: 1; border-radius: 14px; background: var(--paper-2); border: 3px solid transparent; }
 .avb.on { border-color: var(--ink); background: var(--sun-soft); }
 
 
@@ -392,3 +392,37 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 .pedit { position: absolute; top: -8px; right: -8px; width: 44px; height: 44px; border-radius: 50%; font-size: 18px;
   background: var(--paper); border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); display: grid; place-items: center; }
 .pedit:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+
+/* ---------- result after a puzzle: compact, fits under the board on a phone ---------- */
+.sheet { padding: 12px 14px 14px; display: grid; gap: 12px; }
+.sheet .btn { padding-inline: 12px; white-space: nowrap; }
+.res-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.res-row .starrow { flex: 1; margin: 0; min-height: 52px; align-items: center; }
+.starrow.mistakes svg { width: 56px; height: 56px; }
+.sprout { font-size: 46px; line-height: 1; display: inline-block; animation: starpop .45s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.res-rating { flex: none; display: grid; grid-template-columns: auto auto; column-gap: 6px; align-items: baseline; justify-items: start;
+  padding: 6px 12px; border-radius: 14px; background: var(--paper-2); font-variant-numeric: tabular-nums; }
+.res-rating small { grid-column: 1 / -1; color: var(--muted); font-weight: 700; font-size: .78rem; line-height: 1.1; }
+.res-rating b { font-size: 1.25rem; font-weight: 800; }
+.res-rating em { font-style: normal; font-weight: 800; font-size: 1rem; color: var(--muted); }
+.res-rating em.up { color: #23874A; }
+.res-rating em.down { color: #C8324F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .res-rating em.up { color: #7FE0A2; } :root:not([data-theme="light"]) .res-rating em.down { color: #FF9AAE; } }
+:root[data-theme="dark"] .res-rating em.up { color: #7FE0A2; }
+:root[data-theme="dark"] .res-rating em.down { color: #FF9AAE; }
+
+/* phones: tighter side panel so board + cat + result + button fit one screen */
+@media (max-width: 600px) {
+  .arena { gap: 12px; }
+  .side .study .cat { width: 64px; height: 64px; }
+  .side .bubble { font-size: 1rem; padding: 9px 13px; }
+  .tools, .sheet { margin-top: 10px; }
+  .sheet .btn { min-height: 52px; }
+}
+
+/* tablets in landscape: shelf beside the cat instead of below it */
+@media (min-width: 900px) and (orientation: landscape) {
+  .home { max-width: 1060px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 32px; align-items: start; }
+  .home > * { grid-column: 1; }
+  .home > .bookcase { grid-column: 2; grid-row: 1 / span 4; margin-top: 8px; }
+}
