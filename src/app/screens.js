@@ -79,8 +79,11 @@ const App = (function () {
 
     // bookcase — grows with the number of volumes; the last slot always hints at more to come
     const body = el.querySelector('.bc-body');
-    const width = Math.min(560, document.documentElement.clientWidth - 32) - 36;
-    const perShelf = Math.max(2, Math.min(5, Math.floor((width + 10) / 96)));
+    // usable shelf width, mirroring the CSS: one column on phones, half the page on landscape tablets
+    const cw = document.documentElement.clientWidth;
+    const twoCol = window.matchMedia && matchMedia('(min-width: 900px) and (orientation: landscape)').matches;
+    const width = (twoCol ? (Math.min(1060, cw - 32) - 32) / 2 : Math.min(560, cw - 32)) - 36;
+    const perShelf = Math.max(3, Math.min(7, Math.floor((width - 12 + 8) / 68)));
     // the "soon" slot and the plant only go where there is room: never a shelf of their own
     const items = vols.map((v, i) => bookEl(v, i, pl));
     if (items.length % perShelf !== 0) items.push(h(`<div class="book soon" aria-label="Скоро новая книга"><span class="book-num">…</span><span class="book-cap">скоро</span></div>`));
@@ -96,7 +99,7 @@ const App = (function () {
   function bookEl(vol, i, pl) {
     const st = Progress.volumeStats(pl, vol);
     const b = h(`<button class="book tome" style="--c:${bookColor(i)}">
-      <span class="book-band"></span><span class="book-spine"></span><span class="book-cap">✓ ${st.solved}/${st.n}</span><span class="book-band low"></span>
+      <span class="book-band"></span><span class="book-spine"></span><span class="book-cap">${Math.round(st.solved / st.n * 100)}%</span><span class="book-band low"></span>
     </button>`);
     b.querySelector('.book-spine').textContent = vol.short;
     b.setAttribute('aria-label', `${vol.title}: решено ${st.solved} из ${st.n}`);
