@@ -24,6 +24,7 @@ const Progress = (function () {
       id, v: SCHEMA, name: cleanName(name) || 'Игрок', avatar: validAvatar(avatar) ? avatar : AVATARS[0],
       rating: CONFIG.rating.start, bestRating: CONFIG.rating.start,
       points: 0, played: 0, clean: 0, best: {}, recent: [], lesson: null, lessonsDone: 0,
+      pauseSec: CONFIG.mistakePauseSec,
       createdAt: now, updatedAt: now,
     };
   }
@@ -33,6 +34,7 @@ const Progress = (function () {
     if (!v || typeof v !== 'object' || typeof id !== 'string' || !/^[\w.~:@+-]{1,60}$/.test(id)) return null;
     const p = fresh(id, v.name, v.avatar, int(v.createdAt));
     p.updatedAt = int(v.updatedAt);
+    if (v.pauseSec !== undefined) p.pauseSec = Math.min(30, int(v.pauseSec));
     if (v.v !== SCHEMA) return p;
     p.rating = int(v.rating, CONFIG.rating.floor);
     p.bestRating = Math.max(p.rating, int(v.bestRating));
@@ -69,18 +71,20 @@ const Progress = (function () {
   function ensureCurrent() { if (!S.players.find(p => p.id === S.currentId)) S.currentId = S.players[0] ? S.players[0].id : null; }
   const current = () => S.players.find(p => p.id === S.currentId) || null;
   function setCurrent(id) { S.currentId = id; save(); }
-  function addPlayer(name, avatarIdx) {
+  function addPlayer(name, avatarIdx, pauseSec) {
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const p = fresh(id, cleanName(name) || AVNAMES[avatarIdx], AVATARS[avatarIdx]);
+    if (pauseSec !== undefined) p.pauseSec = Math.min(30, int(pauseSec));
     p.synced = false;
     S.players.push(p); S.currentId = p.id; save(); queuePush(p, 50);
     return p;
   }
   /** Rename / change avatar. Progress stays attached to the id. */
-  function updatePlayer(id, { name, avatarIdx }) {
+  function updatePlayer(id, { name, avatarIdx, pauseSec }) {
     const p = S.players.find(x => x.id === id); if (!p) return null;
     if (name !== undefined) p.name = cleanName(name) || p.name;
     if (avatarIdx !== undefined && AVATARS[avatarIdx]) p.avatar = AVATARS[avatarIdx];
+    if (pauseSec !== undefined) p.pauseSec = Math.min(30, int(pauseSec));
     touch(p);
     return p;
   }

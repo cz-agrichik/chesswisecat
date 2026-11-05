@@ -12,6 +12,8 @@
      'your-turn'    — child to move ({ first: true } for the first move)
      'correct'      — right move, opponent will reply
      'wrong'        — { left } tries remaining (left > 0)
+     'pause'        — { ms } think-pause after a mistake: input is off for ms
+     'resume'       — the pause is over, child to move again
      'hint'         — { level: 1, piece } piece marked / { level: 2 } arrow drawn; { left }
      'guided'       — tries are over, arrows will lead the way
      'guide-turn'   — arrow drawn, child to play it
@@ -20,15 +22,16 @@
      'replay-start' / 'replay-done' — the whole line is being shown again
      'broken'       — the puzzle data could not be played                     */
 class PuzzleController {
-  constructor(board, puzzle, { tries = 3, onEvent } = {}) {
+  constructor(board, puzzle, { tries = 3, onEvent, pauseMs } = {}) {
     this.board = board;
     this.p = puzzle;
     this.tries = tries;
+    this.pauseMs = pauseMs || (() => 0);   // k-th mistake → pause length, ms
     this.emit = onEvent || (() => {});
     this.timers = new Set();
     this.ply = 0; this.mistakes = 0; this.hints = 0; this.guided = false;
     this.hintPly = -1; this.hintLevel = 0;
-    this.phase = 'idle';   // intro | player | opponent | done | replay
+    this.phase = 'idle';   // intro | player | paused | opponent | done | replay
     this.result = null;
     board.onAttempt = m => this._attempt(m);
   }
@@ -90,8 +93,18 @@ class PuzzleController {
     this.board.reject(m);
     if (this.guided) return this.emit('guide-wrong');
     this.mistakes++;
-    if (this.left > 0) return this.emit('wrong', { left: this.left });
-    this._toGuided();
+    if (this.left <= 0) return this._toGuided();
+    this.emit('wrong', { left: this.left });
+    const ms = this.pauseMs(this.mistakes);
+    if (ms > 0) {   // think-pause: no moves until it runs out
+      this.phase = 'paused'; this.board.setInteractive(null);
+      this.emit('pause', { ms });
+      this.later(ms, () => {
+        if (this.phase !== 'paused') return;
+        this.phase = 'player'; this.board.setInteractive(this.player);
+        this.emit('resume');
+      });
+    }
   }
 
   _toGuided() {

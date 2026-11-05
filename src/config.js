@@ -20,6 +20,13 @@ const CONFIG = {
   // don't repeat any of the last N puzzles while there is a choice.
   avoidRecent: 15,
 
+  // Pause after a wrong move: the board greys out and an hourglass counts down,
+  // so the child thinks instead of clicking again. k-th mistake → k × pauseSec seconds.
+  // No pause after the last mistake (arrows come instead). Default per player;
+  // each player can change it in their profile (pauseOptions are the choices).
+  mistakePauseSec: 3,
+  pauseOptions: [0, 2, 3, 5, 10],
+
   soundOnByDefault: true,
   storageKey: 'chesswisecat.v1',
   legacyStorageKeys: ['shakhmatyata.v2'],   // names and avatars are carried over from these

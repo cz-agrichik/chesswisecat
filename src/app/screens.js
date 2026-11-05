@@ -156,6 +156,7 @@ const App = (function () {
   }
   function endPlay() {
     if (!session) return;
+    hidePause();
     if (session.puzzle) session.puzzle.dispose();
     if (session.board) session.board.destroy();
     session.puzzle = null; session.board = null;
@@ -200,6 +201,7 @@ const App = (function () {
   }
 
   function loadPuzzle() {
+    hidePause();
     const pl = Progress.current();
     const z = session.z = PuzzleSource.pickNext(session.vol, pl);
     if (session.puzzle) session.puzzle.dispose();
@@ -208,12 +210,15 @@ const App = (function () {
     if (!z) { say('Задачи скоро появятся!'); return; }
     const pc = session.puzzle = new PuzzleController(session.board, z, {
       tries: CONFIG.triesBeforeAnswer,
+      pauseMs: k => k * pauseSecOf(pl) * 1000,
       onEvent: (type, data) => {
         if (type === 'intro') say(T.cat.opponent());
         else if (type === 'your-turn') { $('#hintBtn').disabled = !pc.canHint(); say(data.first ? T.goal(z, pc.player) : T.cat.continueTurn()); }
         else if (type === 'correct') { $('#hintBtn').disabled = true; UI.sound.good(); say(T.cat.correct()); }
         else if (type === 'wrong') { UI.sound.bad(); UI.vibrate(90); updateHearts(pc.left, true); say(T.cat.wrong(data.left)); }
         else if (type === 'hint') { updateHearts(pc.left, true); say(data.level === 1 ? T.cat.hint1(data.piece, data.left) : T.cat.hint2()); $('#hintBtn').disabled = !pc.canHint(); }
+        else if (type === 'pause') { $('#hintBtn').disabled = true; showPause(data.ms); }
+        else if (type === 'resume') { hidePause(); $('#hintBtn').disabled = !pc.canHint(); }
         else if (type === 'guided') { UI.sound.bad(); UI.vibrate(90); updateHearts(0, true); $('#hintBtn').disabled = true; say(T.cat.guided()); }
         else if (type === 'guide-turn') { if (!data.first) say(T.cat.guideTurn()); }
         else if (type === 'guide-wrong') { UI.vibrate(40); say(T.cat.guideWrong()); }
@@ -310,20 +315,46 @@ const App = (function () {
     return el;
   }
   /** Create (p = null) or edit a player: name and avatar. */
+  /* ---------- think-pause after a mistake ---------- */
+  const pauseSecOf = p => (p && Number.isFinite(p.pauseSec) ? p.pauseSec : CONFIG.mistakePauseSec);
+  let pauseTimer = 0;
+  /** Grey the board and show a small hourglass with a countdown above its top edge. */
+  function showPause(ms) {
+    hidePause();
+    const board = session && session.board && session.board.el; if (!board) return;
+    board.classList.add('paused');
+    const end = Date.now() + ms;
+    const badge = h(`<div class="pause-badge" role="timer" aria-label="Подумай"><span class="hg" aria-hidden="true">⏳</span><b></b><i style="animation-duration:${ms}ms"></i></div>`);
+    const tick = () => { const s = Math.max(0, Math.ceil((end - Date.now()) / 1000)); badge.querySelector('b').textContent = s; };
+    tick(); pauseTimer = setInterval(tick, 200);
+    board.append(badge);
+  }
+  function hidePause() {
+    clearInterval(pauseTimer); pauseTimer = 0;
+    document.querySelectorAll('.pause-badge').forEach(x => x.remove());
+    document.querySelectorAll('.board.paused').forEach(x => x.classList.remove('paused'));
+  }
+
   function playerModal(p) {
     let av = p ? Math.max(0, Progress.AVATARS.indexOf(p.avatar)) : 0;
     const el = h(`<form autocomplete="off"><h2>${p ? 'Изменить игрока' : 'Новый игрок'}</h2>
       <label class="field">Имя<input name="nm" maxlength="${Progress.NAME_MAX}" placeholder="Например, Маша" enterkeyhint="done"></label>
       <p class="field" style="margin:0">Кем ты будешь?</p>
       <div class="avs">${Progress.AVATARS.map((a, i) => `<button type="button" class="avb ${i === av ? 'on' : ''}" data-i="${i}" aria-label="${Progress.AVNAMES[i]}">${a}</button>`).join('')}</div>
+      <p class="field" style="margin:0">Пауза после ошибки</p>
+      <div class="seg" role="radiogroup" aria-label="Пауза после ошибки">${CONFIG.pauseOptions.map(s => `<button type="button" class="segb" data-s="${s}" role="radio">${s ? s + ' сек' : 'нет'}</button>`).join('')}</div>
       <button class="btn wide" type="submit">${p ? 'Сохранить' : 'Готово'}</button></form>`);
+    let ps = pauseSecOf(p);
+    const markPs = () => el.querySelectorAll('.segb').forEach(x => { const on = +x.dataset.s === ps; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
+    el.querySelectorAll('.segb').forEach(b => b.onclick = () => { ps = +b.dataset.s; markPs(); });
+    markPs();
     if (p) el.nm.value = p.name;
     el.querySelectorAll('.avb').forEach(b => b.onclick = () => { av = +b.dataset.i; el.querySelectorAll('.avb').forEach(x => x.classList.toggle('on', x === b)); });
     const close = UI.modal(el);
     el.onsubmit = e => {
       e.preventDefault();
-      if (p) { Progress.updatePlayer(p.id, { name: el.nm.value, avatarIdx: av }); close(); render(); }
-      else { Progress.addPlayer(el.nm.value, av); close(); go('home'); }
+      if (p) { Progress.updatePlayer(p.id, { name: el.nm.value, avatarIdx: av, pauseSec: ps }); close(); render(); }
+      else { Progress.addPlayer(el.nm.value, av, ps); close(); go('home'); }
     };
   }
 

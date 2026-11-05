@@ -429,3 +429,18 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
   .home { grid-template-rows: repeat(4, auto) 1fr; }
   .home > .bookcase { grid-column: 2; grid-row: 1 / span 5; margin-top: 8px; }
 }
+
+/* ---------- think-pause after a mistake ---------- */
+.board .sqs, .board .pcs { transition: filter .35s ease, opacity .35s ease; }
+.board.paused .sqs, .board.paused .pcs { filter: grayscale(1) brightness(.95); opacity: .5; }
+.pause-badge { position: absolute; z-index: 30; top: -18px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px; padding: 4px 14px 7px 10px; overflow: hidden;
+  background: var(--paper); color: var(--text); border: 3px solid var(--ink); border-radius: 999px; box-shadow: 0 3px 0 var(--ink);
+  font-weight: 800; font-size: 1.15rem; font-variant-numeric: tabular-nums; pointer-events: none; animation: pop .28s ease-out; }
+.pause-badge .hg { font-size: 1.2rem; display: inline-block; animation: hgflip 1.2s ease-in-out infinite; }
+.pause-badge i { position: absolute; left: 0; bottom: 0; height: 4px; width: 100%; background: var(--sun); transform-origin: left; animation-name: hgbar; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes hgflip { 0%, 60% { transform: rotate(0); } 80%, 100% { transform: rotate(180deg); } }
+@keyframes hgbar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.seg { display: flex; gap: 6px; margin: 6px 0 18px; }
+.segb { flex: 1; min-width: 0; padding: 10px 0; border-radius: 12px; font-weight: 700; font-size: clamp(.78rem, 3.6vw, .95rem); white-space: nowrap; background: var(--paper-2); color: var(--text); border: 3px solid transparent; }
+.segb.on { border-color: var(--ink); background: var(--sun-soft); }
