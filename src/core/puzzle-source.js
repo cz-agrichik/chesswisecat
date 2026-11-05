@@ -60,7 +60,7 @@ const PuzzleSource = (function () {
     if (cache) return cache;
     cache = (Array.isArray(VOLUMES) ? VOLUMES : []).map((def, i) => {
       const id = def.id || 'vol-' + (i + 1);
-      return { id, index: i, title: def.title || `Книга ${i + 1}`, short: def.short || def.title || `Книга ${i + 1}`, puzzles: parseBook(def.csv || '', id) };
+      return { id, index: i, color: def.color || null, title: def.title || `Книга ${i + 1}`, short: def.short || def.title || `Книга ${i + 1}`, puzzles: parseBook(def.csv || '', id) };
     }).filter(v => v.puzzles.length);
     return cache;
   }

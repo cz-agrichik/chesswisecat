@@ -373,10 +373,11 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 #hintBtn small { font-weight: 700; color: var(--muted); font-size: .85rem; margin-left: 2px; }
 
 /* ---------- volume (one big book) ---------- */
-.book.tome { width: 60px; height: 178px; gap: 4px; justify-content: space-between; padding: 26px 0 26px; }
-.shelf:has(.tome) { height: 196px; gap: 8px; }
+.book.tome { width: 50px; height: 178px; gap: 4px; justify-content: space-between; padding: 26px 0 26px; }
+.shelf:has(.tome) { height: 196px; gap: 6px; }
 .book-spine { writing-mode: vertical-rl; transform: rotate(180deg); flex: 1; min-height: 0; overflow: hidden;
-  font-weight: 800; font-size: .7rem; line-height: 1.05; color: #23264A; text-align: center; }
+  font-weight: 700; font-size: .7rem; line-height: 1.22; letter-spacing: .015em; color: var(--sp, #23264A); text-align: center; }
+.book.tome[style*="--sp:#fff"] .book-spine { text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }
 .vcard { margin-top: 16px; padding: 14px; }
 .vgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
 .vc { display: inline-grid; place-items: center; aspect-ratio: 1; min-width: 0; border-radius: 6px; font-size: .62rem; font-style: normal; font-weight: 800; letter-spacing: -1px;
@@ -425,5 +426,6 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 @media (min-width: 900px) and (orientation: landscape) {
   .home { max-width: 1060px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 32px; align-items: start; }
   .home > * { grid-column: 1; }
-  .home > .bookcase { grid-column: 2; grid-row: 1 / span 4; margin-top: 8px; }
+  .home { grid-template-rows: repeat(4, auto) 1fr; }
+  .home > .bookcase { grid-column: 2; grid-row: 1 / span 5; margin-top: 8px; }
 }

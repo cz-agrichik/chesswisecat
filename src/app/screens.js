@@ -9,6 +9,14 @@ const App = (function () {
   const T = Texts;
   const BOOK_COLORS = ['#FF8A7A', '#6CCB8C', '#72C8F2', '#B7A6F2', '#FFC83D', '#FF7396', '#4FC2B4', '#F59E5B'];
   const bookColor = i => BOOK_COLORS[i % BOOK_COLORS.length];
+  /** Spine text colour: white or dark ink, whichever reads better on the book colour (WCAG contrast). */
+  function spineInk(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return '#23264A';
+    const lum = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
+      .map(c => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+    const L = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+    return 1.05 / (L + 0.05) >= (L + 0.05) / 0.0687 ? '#fff' : '#23264A';   // 0.0687 = luminance of #23264A + 0.05
+  }
   const GOAL = CONFIG.lessonGoal;
 
   let screen = 'home';
@@ -83,7 +91,7 @@ const App = (function () {
     const cw = document.documentElement.clientWidth;
     const twoCol = window.matchMedia && matchMedia('(min-width: 900px) and (orientation: landscape)').matches;
     const width = (twoCol ? (Math.min(1060, cw - 32) - 32) / 2 : Math.min(560, cw - 32)) - 36;
-    const perShelf = Math.max(3, Math.min(7, Math.floor((width - 12 + 8) / 68)));
+    const perShelf = Math.max(3, Math.min(8, Math.floor((width - 12 + 6) / 56)));
     // the "soon" slot and the plant only go where there is room: never a shelf of their own
     const items = vols.map((v, i) => bookEl(v, i, pl));
     if (items.length % perShelf !== 0) items.push(h(`<div class="book soon" aria-label="Скоро новая книга"><span class="book-num">…</span><span class="book-cap">скоро</span></div>`));
@@ -98,7 +106,7 @@ const App = (function () {
   }
   function bookEl(vol, i, pl) {
     const st = Progress.volumeStats(pl, vol);
-    const b = h(`<button class="book tome" style="--c:${bookColor(i)}">
+    const b = h(`<button class="book tome" style="--c:${vol.color || bookColor(i)};--sp:${spineInk(vol.color || bookColor(i))}">
       <span class="book-band"></span><span class="book-spine"></span><span class="book-cap">${Math.round(st.solved / st.n * 100)}%</span><span class="book-band low"></span>
     </button>`);
     b.querySelector('.book-spine').textContent = vol.short;
@@ -113,7 +121,7 @@ const App = (function () {
     if (!vol) return homeScreen();
     const st = Progress.volumeStats(pl, vol), L = lessonView(pl), P = CONFIG.points;
     const el = h(`<section class="page">
-      <div class="packhead"><div class="cover" style="--c:${bookColor(vol.index)}"><span>${vol.index + 1}</span></div>
+      <div class="packhead"><div class="cover" style="--c:${vol.color || bookColor(vol.index)}"><span>${vol.index + 1}</span></div>
         <div><h1></h1><p class="muted"></p></div></div>
       <button class="btn wide" data-start></button>
       <div class="card vcard">
