@@ -187,7 +187,7 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 .book-num { font-family: "Rubik Bubbles", "Rubik", sans-serif; font-size: 2rem; line-height: 1; color: #fff; -webkit-text-stroke: 1.5px #23264A; paint-order: stroke fill; }
 .book-cap { font-size: .72rem; font-weight: 800; padding: 1px 5px; border-radius: 6px; background: rgba(255, 255, 255, .85); white-space: nowrap; }
 @keyframes bob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -6px); } }
-.book.soon { width: 60px; height: 116px; background: transparent; box-shadow: none; border: 3px dashed rgba(255, 243, 221, .75); color: #FFF3DD; transform: rotate(-9deg); transform-origin: bottom left; }
+.book.soon { margin-left: 16px; width: 60px; height: 116px; background: transparent; box-shadow: none; border: 3px dashed rgba(255, 243, 221, .75); color: #FFF3DD; transform: rotate(-9deg); transform-origin: bottom left; }
 .book.soon .book-num { color: #FFF3DD; -webkit-text-stroke: 0; }
 .book.soon .book-cap { background: transparent; color: #FFF3DD; }
 
