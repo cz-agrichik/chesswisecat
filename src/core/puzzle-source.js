@@ -74,22 +74,51 @@ const PuzzleSource = (function () {
     return mixed;
   }
 
+  /** How likely a puzzle is, by its rating vs the player's (CONFIG.ratingWindow):
+      inside [x+low, x+high] → 1; every `step` further out halves it; beyond
+      `maxSteps` steps → 0 (never picked while anything closer exists). */
+  function ratingWeight(puzzleRating, playerRating) {
+    const W = CONFIG.ratingWindow, x = playerRating, r = puzzleRating;
+    const out = r < x + W.low ? (x + W.low) - r : r > x + W.high ? r - (x + W.high) : 0;
+    if (!out) return 1;
+    const k = Math.ceil(out / W.step);
+    return k > W.maxSteps ? 0 : Math.pow(0.5, k);
+  }
+
+  function weightedPick(list, weightOf) {
+    let total = 0; const ws = list.map(z => { const w = weightOf(z); total += w; return w; });
+    if (total <= 0) return null;
+    let u = Math.random() * total;
+    for (let i = 0; i < list.length; i++) { u -= ws[i]; if (u < 0) return list[i]; }
+    return list[list.length - 1];
+  }
+
   /** Next puzzle for this player from the volume. Current rule:
-      1) never-seen puzzles first, at random;
-      2) then puzzles not yet solved cleanly;
-      3) then anything — always skipping the last CONFIG.avoidRecent ones when possible. */
+      1) never-seen puzzles first; 2) then puzzles not yet solved cleanly; 3) then anything.
+      Inside each group the choice is random, weighted by ratingWeight (closer to the
+      player's level = likelier). The last CONFIG.avoidRecent puzzles are skipped when
+      possible. If nothing in the volume is within the window, the puzzles closest to
+      the player's level are used instead. */
   function pickNext(vol, player) {
     const all = vol.puzzles; if (!all.length) return null;
     const best = (player && player.best) || {};
+    const x = player && Number.isFinite(player.rating) ? player.rating : CONFIG.rating.start;
     const recent = new Set(((player && player.recent) || []).slice(0, Math.min(CONFIG.avoidRecent, all.length - 1)));
     const pool = all.filter(z => !recent.has(z.id));
-    const rnd = a => a[Math.floor(Math.random() * a.length)];
-    const unseen = pool.filter(z => best[z.id] === undefined);
-    if (unseen.length) return rnd(unseen);
-    const weak = pool.filter(z => best[z.id] < CONFIG.points.clean);
-    if (weak.length) return rnd(weak);
-    return rnd(pool.length ? pool : all);
+    const weight = z => ratingWeight(z.rating, x);
+    const groups = [
+      pool.filter(z => best[z.id] === undefined),
+      pool.filter(z => best[z.id] !== undefined && best[z.id] < CONFIG.points.clean),
+      pool,
+    ];
+    for (const g of groups) { const z = weightedPick(g, weight); if (z) return z; }
+    // nothing within the window: take the nearest-rated puzzles (still preferring unseen)
+    const src = groups.find(g => g.length) || all;
+    const dist = z => Math.abs(z.rating - (x + (CONFIG.ratingWindow.low + CONFIG.ratingWindow.high) / 2));
+    const dmin = Math.min(...src.map(dist));
+    const near = src.filter(z => dist(z) - dmin < CONFIG.ratingWindow.step);
+    return near[Math.floor(Math.random() * near.length)];
   }
 
-  return { getVolumes, getVolume, getMixed, pickNext, parseCSV, isValid };
+  return { getVolumes, getVolume, getMixed, pickNext, ratingWeight, parseCSV, isValid };
 })();

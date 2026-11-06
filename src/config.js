@@ -19,6 +19,11 @@ const CONFIG = {
   // Puzzle picking inside a volume (core/puzzle-source.js):
   // don't repeat any of the last N puzzles while there is a choice.
   avoidRecent: 15,
+  // Rating window for picking: puzzles rated within [x + low, x + high] (x = player's
+  // rating) are picked most often; each `step` further out halves the chance;
+  // more than maxSteps steps out → not picked at all.
+  // Now: target x-200..x; x-400..x-200 and x..x+200 → ½; x-600..x-400 and x+200..x+400 → ¼.
+  ratingWindow: { low: -200, high: 0, step: 200, maxSteps: 2 },
 
   // Pause after a wrong move: the board greys out and an hourglass counts down,
   // so the child thinks instead of clicking again. k-th mistake → k × pauseSec seconds.
