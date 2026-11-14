@@ -1,0 +1,13 @@
+{
+  "name": "chesswisecat",
+  "private": true,
+  "description": "Chess puzzles for kids with the Wise Chess Cat. A plain static site: open index.html.",
+  "scripts": {
+    "test": "node tests/run.js",
+    "build": "node tools/build-artifact.js",
+    "stats": "node tools/book-stats.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

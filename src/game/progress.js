@@ -1,17 +1,19 @@
 /* game/progress.js — players and their progress: Elo rating, points, lessons,
-   best result per puzzle. Players are keyed by a stable id (name and avatar can be
+   best result per puzzle, a short history of solved puzzles, language and gender.
+   Saved in localStorage; syncing between devices is game/cloud.js. Players are keyed by a stable id (name and avatar can be
    edited). Saved in localStorage and, when the page runs as a claude.ai artifact,
    synced through the artifact database. */
 const Progress = (function () {
-  // Who the child can be: heroes, magic folk, animals, things. 6 per row in the picker.
-  const AVATARS = ['🦸', '🧙', '🧑‍🚀', '🥷', '🧚', '🧜', '🤖', '👑', '🦉', '🐬', '🦄', '🐉', '🦖', '🐱', '🐶', '🚀', '🌈', '⚡'];
-  const AVNAMES = ['Супергерой', 'Волшебник', 'Космонавт', 'Ниндзя', 'Фея', 'Русалка', 'Робот', 'Корона', 'Сова', 'Дельфин', 'Единорог', 'Дракон', 'Динозавр', 'Котёнок', 'Щенок', 'Ракета', 'Радуга', 'Молния'];
+  // Who the child can be: one row of six in the picker.
+  const AVATARS = ['🦸', '🧚', '🧑‍🚀', '🦄', '🐱', '🦖'];
+  // Avatar names (for screen readers / a default name) are in ui/texts.js.
   // Avatars from earlier versions stay valid until the player picks a new one.
-  const LEGACY_AVATARS = ['🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐰', '🐨', '🐙', '🐧'];
+  const LEGACY_AVATARS = ['🧙', '🥷', '🧜', '🤖', '👑', '🦉', '🐬', '🐉', '🐶', '🚀', '🌈', '⚡', '🦊', '🐻', '🐼', '🐯', '🦁', '🐸', '🐵', '🐰', '🐨', '🐙', '🐧'];
   const validAvatar = a => AVATARS.includes(a) || LEGACY_AVATARS.includes(a);
   const SCHEMA = 2;
   const NAME_MAX = 14;
-  const S = { players: [], currentId: null, muted: !CONFIG.soundOnByDefault };
+  const HISTORY_MAX = 400;   // last puzzles kept per player for the history screen
+  const S = { players: [], currentId: null, muted: !CONFIG.soundOnByDefault, lang: 'en', deleted: {} };
   const listeners = new Set();
   const changed = () => listeners.forEach(fn => fn());
 
@@ -21,10 +23,10 @@ const Progress = (function () {
 
   function fresh(id, name, avatar, now = Date.now()) {
     return {
-      id, v: SCHEMA, name: cleanName(name) || 'Игрок', avatar: validAvatar(avatar) ? avatar : AVATARS[0],
+      id, v: SCHEMA, name: cleanName(name) || Texts.t('defaultName'), avatar: validAvatar(avatar) ? avatar : AVATARS[0],
       rating: CONFIG.rating.start, bestRating: CONFIG.rating.start,
       points: 0, played: 0, clean: 0, best: {}, recent: [], lesson: null, lessonsDone: 0,
-      pauseSec: CONFIG.mistakePauseSec,
+      pauseSec: CONFIG.mistakePauseSec, lang: 'en', gender: 'n', history: [],
       createdAt: now, updatedAt: now,
     };
   }
@@ -35,6 +37,8 @@ const Progress = (function () {
     const p = fresh(id, v.name, v.avatar, int(v.createdAt));
     p.updatedAt = int(v.updatedAt);
     if (v.pauseSec !== undefined) p.pauseSec = Math.min(30, int(v.pauseSec));
+    if (Texts.isLang(v.lang)) p.lang = v.lang;
+    if (Texts.isGender(v.gender)) p.gender = v.gender;
     if (v.v !== SCHEMA) return p;
     p.rating = int(v.rating, CONFIG.rating.floor);
     p.bestRating = Math.max(p.rating, int(v.bestRating));
@@ -42,12 +46,19 @@ const Progress = (function () {
     if (v.best && typeof v.best === 'object') {
       for (const k of Object.keys(v.best).slice(0, 50000)) p.best[String(k).slice(0, 40)] = Math.min(CONFIG.points.clean, int(v.best[k]));
     }
+    if (Array.isArray(v.history)) p.history = v.history.slice(0, HISTORY_MAX).map(cleanEntry).filter(Boolean);
     if (Array.isArray(v.recent)) p.recent = v.recent.filter(x => typeof x === 'string').map(x => x.slice(0, 40)).slice(0, 50);
     const L = v.lesson;
     if (L && typeof L === 'object') p.lesson = { num: int(L.num, 1), pts: int(L.pts), n: int(L.n), clean: int(L.clean), r0: int(L.r0) };
     return p;
   }
-  const toCloud = p => { const o = Object.assign({}, p); delete o.synced; delete o.id; return o; };
+  /** One history entry: t time (ms), id puzzle, v book id, r puzzle rating, s points (2 clean / 1 mistakes / 0 arrows),
+      d rating change, R rating after. Newest first. */
+  function cleanEntry(e) {
+    if (!e || typeof e !== 'object' || typeof e.id !== 'string') return null;
+    return { t: int(e.t), id: e.id.slice(0, 40), v: String(e.v || '').slice(0, 40), r: int(e.r), s: Math.min(2, int(e.s)),
+      d: Number.isFinite(+e.d) ? Math.round(+e.d) : 0, R: int(e.R) };
+  }
 
   function load() {
     let raw = null;
@@ -62,33 +73,52 @@ const Progress = (function () {
       if (Array.isArray(raw.players)) S.players = raw.players.map(p => { const v = sanitize(p && p.id, p); if (v) v.synced = !!p.synced && p.v === SCHEMA; return v; }).filter(Boolean);
       S.currentId = raw.currentId || null;
       if (typeof raw.muted === 'boolean') S.muted = raw.muted;
+      if (Texts.isLang(raw.lang)) S.lang = raw.lang;
+      if (raw.deleted && typeof raw.deleted === 'object') S.deleted = raw.deleted;
     }
     ensureCurrent(); save();
   }
   function save() {
-    try { localStorage.setItem(CONFIG.storageKey, JSON.stringify({ players: S.players, currentId: S.currentId, muted: S.muted })); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(CONFIG.storageKey, JSON.stringify({ players: S.players, currentId: S.currentId, muted: S.muted, lang: S.lang, deleted: S.deleted })); } catch (e) { /* ignore */ }
   }
   function ensureCurrent() { if (!S.players.find(p => p.id === S.currentId)) S.currentId = S.players[0] ? S.players[0].id : null; }
   const current = () => S.players.find(p => p.id === S.currentId) || null;
-  function setCurrent(id) { S.currentId = id; save(); }
-  function addPlayer(name, avatarIdx, pauseSec) {
+  function setCurrent(id) { S.currentId = id; const p = current(); if (p) S.lang = p.lang; save(); }
+  function addPlayer(name, avatarIdx, pauseSec, lang, gender) {
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    const p = fresh(id, cleanName(name) || AVNAMES[avatarIdx], AVATARS[avatarIdx]);
+    const p = fresh(id, cleanName(name) || Texts.avName(avatarIdx), AVATARS[avatarIdx]);
     if (pauseSec !== undefined) p.pauseSec = Math.min(30, int(pauseSec));
+    if (Texts.isLang(lang)) p.lang = S.lang = lang;
+    if (Texts.isGender(gender)) p.gender = gender;
     p.synced = false;
-    S.players.push(p); S.currentId = p.id; save(); queuePush(p, 50);
+    S.players.push(p); S.currentId = p.id; save(); Cloud.push(p, 50);
     return p;
   }
-  /** Rename / change avatar. Progress stays attached to the id. */
-  function updatePlayer(id, { name, avatarIdx, pauseSec }) {
+  /** Rename / change avatar / settings. Progress stays attached to the id. */
+  function updatePlayer(id, { name, avatarIdx, pauseSec, lang, gender }) {
     const p = S.players.find(x => x.id === id); if (!p) return null;
     if (name !== undefined) p.name = cleanName(name) || p.name;
     if (avatarIdx !== undefined && AVATARS[avatarIdx]) p.avatar = AVATARS[avatarIdx];
     if (pauseSec !== undefined) p.pauseSec = Math.min(30, int(pauseSec));
+    if (Texts.isLang(lang)) { p.lang = lang; if (p.id === S.currentId) S.lang = lang; }
+    if (Texts.isGender(gender)) p.gender = gender;
     touch(p);
     return p;
   }
-  function touch(p) { p.updatedAt = Date.now(); p.synced = false; save(); queuePush(p); }
+  /** Delete a player for good. In the cloud the record is replaced by a small tombstone
+      ({ deleted: true }) so that other devices drop it too instead of uploading it again. */
+  function removePlayer(id) {
+    const p = S.players.find(x => x.id === id); if (!p) return false;
+    S.players = S.players.filter(x => x !== p);
+    S.deleted[id] = Date.now();
+    const ids = Object.keys(S.deleted); if (ids.length > 200) delete S.deleted[ids[0]];
+    if (S.currentId === id) S.currentId = null;
+    ensureCurrent(); if (current()) S.lang = current().lang;
+    save(); changed();
+    Cloud.markDeleted(id);
+    return true;
+  }
+  function touch(p) { p.updatedAt = Date.now(); p.synced = false; save(); Cloud.push(p); }
   function setMuted(v) { S.muted = !!v; save(); }
 
   /* ---------- rating, points, lessons ---------- */
@@ -118,6 +148,8 @@ const Progress = (function () {
     const had = p.best[puzzle.id];
     p.best[puzzle.id] = had === undefined ? pts : Math.max(had, pts);
     p.recent = [puzzle.id].concat(p.recent.filter(x => x !== puzzle.id)).slice(0, 40);
+    p.history.unshift({ t: Date.now(), id: puzzle.id, v: puzzle.vol || '', r: int(puzzle.rating), s: pts, d: p.rating - before, R: p.rating });
+    if (p.history.length > HISTORY_MAX) p.history.length = HISTORY_MAX;
 
     L.pts += pts; L.n++; if (win) L.clean++;
     let lessonDone = null;
@@ -140,68 +172,12 @@ const Progress = (function () {
     return { n: vol.puzzles.length, seen, solved, clean };
   }
 
-  /* ---------- cloud sync (claude.ai artifact database) ---------- */
-  let DB = null, writable = true;
-  const timers = new Map(), pending = new Set(), chains = new Map(), retries = new Map();
-  async function initCloud() {
-    if (!window.claude || typeof window.claude.use !== 'function') return;
-    let db = null;
-    try { db = await window.claude.use('db'); } catch (e) { db = null; }
-    if (!db) return;
-    DB = db;
-    try {
-      DB.collection('players').onSnapshot(onSnap, e => {
-        const c = e && e.code;
-        if (c === 'revoked' || c === 'not_granted' || c === 'capability_disabled' || c === 'capability_removed') DB = null;
-      });
-    } catch (e) { DB = null; }
-  }
-  function onSnap(snap) {
-    const remote = new Map();
-    for (const d of snap.docs) { if (!d.exists) continue; const v = sanitize(d.id, d.data()); if (v) remote.set(d.id, v); }
-    let dirty = false;
-    for (const [id, rv] of remote) {
-      const l = S.players.find(p => p.id === id);
-      if (!l) { S.players.push(Object.assign(rv, { synced: true })); dirty = true; }
-      else if (rv.updatedAt > l.updatedAt) { if (busyIds.has(id)) continue; Object.assign(l, rv, { synced: true }); dirty = true; }
-      else if (rv.updatedAt < l.updatedAt) queuePush(l);
-      else if (!l.synced) { l.synced = true; dirty = true; }
-    }
-    if (!snap.metadata || !snap.metadata.fromCache) {
-      for (const l of S.players.slice()) {
-        if (remote.has(l.id)) continue;
-        if (l.synced && !pending.has(l.id)) { S.players = S.players.filter(x => x !== l); dirty = true; }
-        else queuePush(l);
-      }
-    }
-    if (dirty) { ensureCurrent(); save(); changed(); }
-  }
-  const busyIds = new Set();   // players currently solving: don't overwrite them from remote
-  function queuePush(p, delay = 900) {
-    if (!DB || !writable || !p) return;
-    pending.add(p.id); clearTimeout(timers.get(p.id));
-    timers.set(p.id, setTimeout(() => push(p.id), delay));
-  }
-  function push(id) {
-    const p = S.players.find(x => x.id === id);
-    if (!p || !DB) { pending.delete(id); return; }
-    const data = toCloud(p), stamp = p.updatedAt;
-    const next = (chains.get(id) || Promise.resolve())
-      .then(() => DB.collection('players').doc(id).set(data))
-      .then(() => { if (p.updatedAt === stamp) p.synced = true; retries.delete(id); save(); })
-      .catch(e => {
-        const c = e && e.code, r = retries.get(id) || 0;
-        if ((c === 'unavailable' || c === 'resource_exhausted') && r < 3) { retries.set(id, r + 1); setTimeout(() => queuePush(p, 0), 1500 + Math.random() * 2500); }
-        else if (c === 'quota_exceeded') UI.toast('Облачное хранилище заполнено — прогресс сохранён на устройстве.');
-        else if (c !== 'unavailable' && c !== 'resource_exhausted') writable = false;
-      })
-      .finally(() => { if (chains.get(id) === next) { chains.delete(id); pending.delete(id); } });
-    chains.set(id, next);
-  }
-
   return {
-    AVATARS, AVNAMES, NAME_MAX, state: S, load, save, current, setCurrent, addPlayer, updatePlayer, setMuted,
-    record, pointsFor, expected, lessonOf, volumeStats, initCloud,
-    onChange: fn => listeners.add(fn), markBusy: (id, on) => (on ? busyIds.add(id) : busyIds.delete(id)),
+    AVATARS, NAME_MAX, HISTORY_MAX, state: S, load, save, current, setCurrent, addPlayer, updatePlayer, removePlayer, setMuted,
+    record, pointsFor, expected, lessonOf, volumeStats,
+    initCloud: () => Cloud.init(), markBusy: (id, on) => Cloud.markBusy(id, on),
+    onChange: fn => listeners.add(fn),
+    // for game/cloud.js only
+    _sync: { sanitize, int, ensureCurrent, changed },
   };
 })();

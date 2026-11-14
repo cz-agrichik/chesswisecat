@@ -1,33 +1,43 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#A9E4F7">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Учёный Кот-Шахматист — шахматные задачи</title>
+<title>The Wise Chess Cat — chess puzzles</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Rubik+Bubbles&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Didact+Gothic&family=Rubik+Bubbles&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="app"></div>
 <script>
   /* VERSION — поднимать при каждом изменении файлов в src/: новый номер = новые адреса,
      и браузер не возьмёт старые скрипты из кеша. Порядок FILES важен. */
-  const VERSION = '31';
+  const VERSION = '36';
   const FILES = [
     'styles.css',
     'config.js',
-    'data/puzzles.js',
+    'data/books.js',          // the shelf; it loads data/books/<id>.js itself
     'core/chess.js',
     'core/puzzle-source.js',
     'ui/texts.js',
+    'i18n/en.js',
+    'i18n/ru.js',
+    'i18n/el.js',
     'ui/visuals.js',
     'ui/board.js',
     'game/puzzle-controller.js',
     'game/progress.js',
-    'app/screens.js',
+    'game/cloud.js',
+    'app/app.js',
+    'app/home.js',
+    'app/volume.js',
+    'app/play.js',
+    'app/results.js',
+    'app/history.js',
+    'app/players.js',
     'app/main.js'
   ];
   for (const f of FILES) document.write(f.endsWith('.css')

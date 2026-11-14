@@ -58,19 +58,20 @@ const PuzzleSource = (function () {
   /** Books on the shelf, in order. */
   function getVolumes() {
     if (cache) return cache;
-    cache = (Array.isArray(VOLUMES) ? VOLUMES : []).map((def, i) => {
-      const id = def.id || 'vol-' + (i + 1);
-      return { id, index: i, color: def.color || null, title: def.title || `Книга ${i + 1}`, short: def.short || def.title || `Книга ${i + 1}`, puzzles: parseBook(def.csv || '', id) };
-    }).filter(v => v.puzzles.length);
+    // BOOKS (data/books.js) gives the order and colours; each book's CSV is in data/books/<id>.js.
+    // Titles are in i18n/*.js (Texts.bookTitle).
+    cache = (Array.isArray(BOOKS) ? BOOKS : []).map((def, i) => (
+      { id: def.id, index: i, color: def.color || null, puzzles: parseBook(PUZZLE_CSV[def.id] || '', def.id) }
+    )).filter(v => v.puzzles.length);
     return cache;
   }
   const getVolume = id => getVolumes().find(v => v.id === id) || null;
-  /** All books together: what the main «Решать» button draws from. */
+  /** All books together: what the main Solve button draws from. */
   function getMixed() {
     if (mixed) return mixed;
     const seen = new Set(), puzzles = [];
     for (const v of getVolumes()) for (const z of v.puzzles) if (!seen.has(z.id)) { seen.add(z.id); puzzles.push(z); }
-    mixed = { id: 'all', index: -1, title: 'Все книги', short: 'Все книги', puzzles, mixed: true };
+    mixed = { id: 'all', index: -1, puzzles, mixed: true };
     return mixed;
   }
 

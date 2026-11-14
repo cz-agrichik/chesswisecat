@@ -148,19 +148,19 @@ const UI = (function () {
     const t = h('<div class="toast" role="status"></div>'); t.textContent = text;
     document.body.append(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 3200);
   }
-  function modal(el) {
+  function modal(el, onClose) {
     const bd = h('<div class="modal-bd" role="dialog" aria-modal="true"></div>');
     const box = h('<div class="modal card"></div>'); box.append(el); bd.append(box); document.body.append(bd);
     const onKey = e => { if (e.key === 'Escape') close(); };
-    function close() { bd.remove(); document.removeEventListener('keydown', onKey); }
+    function close(silent) { if (!bd.isConnected) return; bd.remove(); document.removeEventListener('keydown', onKey); if (onClose && silent !== true) onClose(); }
     bd.addEventListener('click', e => { if (e.target === bd) close(); });
     document.addEventListener('keydown', onKey);
     const f = box.querySelector('input,button'); if (f) setTimeout(() => f.focus(), 30);
     return close;
   }
   function confirm(text, yesLabel, onYes) {
-    const el = h('<div><h2></h2><div class="row2"><button class="btn ghost" data-no>Остаться</button><button class="btn" data-yes></button></div></div>');
-    el.querySelector('h2').textContent = text; el.querySelector('[data-yes]').textContent = yesLabel;
+    const el = h('<div><h2></h2><div class="row2"><button class="btn ghost" data-no></button><button class="btn" data-yes></button></div></div>');
+    el.querySelector('h2').textContent = text; el.querySelector('[data-yes]').textContent = yesLabel; el.querySelector('[data-no]').textContent = Texts.t('stay');
     const close = modal(el);
     el.querySelector('[data-no]').onclick = close;
     el.querySelector('[data-yes]').onclick = () => { close(); onYes(); };

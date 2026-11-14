@@ -1,6 +1,5 @@
 /* config.js — all hardcoded settings live here. */
 const CONFIG = {
-  appName: 'Учёный Кот-Шахматист',
 
   // Tries per puzzle. Mistakes 1..(tries-1) are forgiven (1 point); the last one
   // turns on arrows: the child plays the correct line along them and gets 0 points.

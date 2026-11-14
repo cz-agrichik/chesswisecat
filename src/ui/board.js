@@ -13,7 +13,7 @@ class BoardController {
     this.squares = new Array(64);
     this.sel = -1; this.targets = []; this.drag = null; this.hover = -1;
     el.classList.add('board');
-    el.setAttribute('aria-label', 'Шахматная доска');
+    el.setAttribute('aria-label', Texts.t('board'));
     this._h = {
       down: e => this._onDown(e), move: e => this._onMove(e), up: e => this._onUp(e),
       cancel: () => this._onCancel(), menu: e => e.preventDefault(),
@@ -203,11 +203,11 @@ class BoardController {
   }
   _askPromotion(cands) {
     return new Promise(res => {
-      const ov = UI.h('<div class="promo"><div class="promo-card"><p>Во что превратится пешка?</p><div class="promo-row"></div></div></div>');
+      const ov = UI.h(`<div class="promo"><div class="promo-card"><p>${Texts.t('promoAsk')}</p><div class="promo-row"></div></div></div>`);
       const row = ov.querySelector('.promo-row');
       for (const t of ['q', 'r', 'b', 'n']) {
         const m = cands.find(x => x.promo === t); if (!m) continue;
-        const b = UI.h(`<button class="promo-btn ${this.mover}" aria-label="${Texts.PIECE[t]}">${UI.piece(t)}</button>`);
+        const b = UI.h(`<button class="promo-btn ${this.mover}" aria-label="${Texts.pieceName(t)}">${UI.piece(t)}</button>`);
         b.onclick = ev => { ev.stopPropagation(); ov.remove(); res(m); };
         row.append(b);
       }
