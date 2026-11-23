@@ -102,5 +102,8 @@ Texts.add('el', { name: "Ελληνικά", locale: 'el-GR',
     'smothered': "Ματ αποπνιγμού",
     'xray': "Ακτίνες X",
     'interference': "Παρεμβολή",
+    'endgame-clearance': "Απελευθέρωση στο φινάλε",
+    'opening-discovered': "Αποκάλυψη στο άνοιγμα",
+    'opening-sac-mate': "Θυσία και ματ στο άνοιγμα",
   },
 }));

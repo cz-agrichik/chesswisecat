@@ -102,5 +102,8 @@ Texts.add('ru', { name: "Русский", locale: 'ru-RU',
     'smothered': "Спёртый мат",
     'xray': "Рентген",
     'interference': "Перекрытие",
+    'endgame-clearance': "Освобождение поля",
+    'opening-discovered': "Вскрытые нападения в дебюте",
+    'opening-sac-mate': "Жертва и мат в дебюте",
   },
 }));
