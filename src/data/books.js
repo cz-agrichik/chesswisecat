@@ -48,6 +48,8 @@ const BOOKS = [
   { id: 'endgame-clearance', color: '#1E4FA3' },   // task_endgameclearance1200.csv — clearance in the endgame, rating up to 1200
   { id: 'opening-discovered', color: '#24357F' },   // task_openingdiscovered1200.csv — discovered attacks in the opening (best 200 of 2989), rating up to 1200
   { id: 'opening-sac-mate', color: '#16307A' },   // task_openingsacrificemate1200.csv — mates with a sacrifice in the opening, rating up to 1200
+  // Violet — up to 1300
+  { id: 'hanging-pin', color: '#6A2C91' },   // task_hangingpin1300.csv — pins that win an unprotected piece, rating up to 1300
 ];
 
 // Each book's file is loaded right after this one, in shelf order (the artifact build

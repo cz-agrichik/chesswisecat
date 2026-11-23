@@ -102,6 +102,7 @@ Texts.add('en', { name: "English", locale: 'en-GB',
     'interference': "Interference",
     'endgame-clearance': "Clearance in the endgame",
     'opening-discovered': "Discovered attacks in the opening",
-    'opening-sac-mate': "Mating sacrifices",
+    'opening-sac-mate': "Opening mating sacrifices",
+    'hanging-pin': "Hanging pieces and pins",
   },
 }));

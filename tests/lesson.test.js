@@ -30,8 +30,11 @@ module.exports = {
     assert((await state(p)).guided, 'hint + 2 mistakes should switch to arrows');
     await solveRest(p); await p.waitForTimeout(600);
     assert(await p.isVisible('#sheet .sprout'), 'arrows → a sprout, no stars');
-    await p.click('[data-replay]'); await p.waitForTimeout(6000);
-    assert(await p.isVisible('#sheet'), 'the sheet comes back after the replay');
+    await p.click('[data-replay]');
+    await p.waitForSelector('#sheet[hidden]', { state: 'attached', timeout: 3000 });   // the replay hides it first
+    // the replay takes ~1.5 s per move: wait for the sheet instead of a fixed time
+    const back = await p.waitForSelector('#sheet:not([hidden])', { timeout: 20000 }).then(() => true, () => false);
+    assert(back, 'the sheet comes back after the replay');
 
     await p.evaluate(() => { Progress.current().lesson.pts = 39; });
     await p.click('[data-next]'); await p.waitForTimeout(1500);

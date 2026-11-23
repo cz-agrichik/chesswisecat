@@ -104,6 +104,7 @@ Texts.add('el', { name: "Ελληνικά", locale: 'el-GR',
     'interference': "Παρεμβολή",
     'endgame-clearance': "Απελευθέρωση στο φινάλε",
     'opening-discovered': "Αποκάλυψη στο άνοιγμα",
-    'opening-sac-mate': "Θυσία και ματ στο άνοιγμα",
+    'opening-sac-mate': "Θυσίες για ματ στο άνοιγμα",
+    'hanging-pin': ["Κομμάτια που κρέμονται και κάρφωμα", "Κρέμονται και κάρφωμα"],
   },
 }));
