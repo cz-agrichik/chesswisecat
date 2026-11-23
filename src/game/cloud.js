@@ -1,7 +1,9 @@
 /* game/cloud.js — syncs players between devices through the claude.ai artifact
    database (collection 'players', one document per player id). Does nothing when the
    page is not running as an artifact. Rules:
-   - newer updatedAt wins; a player who is solving right now is never overwritten;
+   - newer updatedAt wins for the counters and settings, but history and best results
+     are joined from both sides, so a device with an old copy can't wipe them;
+   - a player who is solving right now is never overwritten;
    - a deleted player becomes a tombstone { deleted: true } so other devices drop it
      instead of uploading it again (the local list Progress.state.deleted does the same
      before the tombstone arrives). */
@@ -42,10 +44,17 @@ const Cloud = (function () {
     }
     for (const [id, rv] of remote) {
       const l = S.players.find(p => p.id === id);
-      if (!l) { S.players.push(Object.assign(rv, { synced: true })); dirty = true; }
-      else if (rv.updatedAt > l.updatedAt) { if (busyIds.has(id)) continue; Object.assign(l, rv, { synced: true }); dirty = true; }
+      if (!l) { S.players.push(Object.assign(rv, { synced: true })); dirty = true; continue; }
+      // What was solved is never dropped: history and best results are joined from both
+      // sides, whichever record is newer (otherwise a device with a stale copy wipes them).
+      const hist = mergeHistory(l.history, rv.history), best = mergeBest(l.best, rv.best);
+      const remoteMisses = hist.length > rv.history.length || Object.keys(best).length > Object.keys(rv.best).length;
+      const localMisses = hist.length > l.history.length || Object.keys(best).length > Object.keys(l.best).length;
+      if (rv.updatedAt > l.updatedAt && !busyIds.has(id)) { Object.assign(l, rv, { synced: true }); dirty = true; }
+      if (localMisses || remoteMisses) { l.history = hist; l.best = best; dirty = true; }
+      if (remoteMisses) { l.updatedAt = Date.now(); l.synced = false; push_(l); }
       else if (rv.updatedAt < l.updatedAt) push_(l);
-      else if (!l.synced) { l.synced = true; dirty = true; }
+      else if (rv.updatedAt === l.updatedAt && !l.synced) { l.synced = true; dirty = true; }
     }
     if (!snap.metadata || !snap.metadata.fromCache) {
       for (const l of S.players.slice()) {
@@ -55,6 +64,18 @@ const Cloud = (function () {
       }
     }
     if (dirty) { ensureCurrent(); save(); changed(); }
+  }
+  /** Both histories together, newest first, one entry per (time, puzzle). */
+  function mergeHistory(a, b) {
+    const m = new Map();
+    for (const e of (a || []).concat(b || [])) m.set(e.t + '|' + e.id, e);
+    return [...m.values()].sort((x, y) => y.t - x.t).slice(0, Progress.HISTORY_MAX);
+  }
+  /** Best result per puzzle: the higher of the two. */
+  function mergeBest(a, b) {
+    const o = Object.assign({}, a);
+    for (const k of Object.keys(b || {})) o[k] = Math.max(o[k] === undefined ? -1 : o[k], b[k]);
+    return o;
   }
   const busyIds = new Set();   // players currently solving: don't overwrite them from remote
   function push_(p, delay = 900) {
@@ -86,5 +107,5 @@ const Cloud = (function () {
     try { Promise.resolve(DB.collection('players').doc(id).set({ deleted: true, updatedAt: Date.now() })).catch(() => {}); } catch (e) { /* ignore */ }
   }
 
-  return { init, push: push_, markDeleted, markBusy: (id, on) => (on ? busyIds.add(id) : busyIds.delete(id)) };
+  return { init, push: push_, _merge: { mergeHistory, mergeBest, onSnap }, markDeleted, markBusy: (id, on) => (on ? busyIds.add(id) : busyIds.delete(id)) };
 })();
