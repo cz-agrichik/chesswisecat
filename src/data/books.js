@@ -50,6 +50,10 @@ const BOOKS = [
   { id: 'opening-sac-mate', color: '#16307A' },   // task_openingsacrificemate1200.csv — mates with a sacrifice in the opening, rating up to 1200
   // Violet — up to 1300
   { id: 'hanging-pin', color: '#6A2C91' },   // task_hangingpin1300.csv — pins that win an unprotected piece, rating up to 1300
+  { id: 'attack-f7', color: '#7B3FA6' },   // task_attackf7_1300.csv — rating up to 1300
+  { id: 'hanging-mate', color: '#5B2380' },   // task_hangingmate1300.csv — rating up to 1300
+  { id: 'long-defence', color: '#8E52B8' },   // task_longdefence1300.csv — rating up to 1300
+  { id: 'rook-endgame', color: '#4E1F73' },   // task_rookendgame1300.csv — rating up to 1300
 ];
 
 // Each book's file is loaded right after this one, in shelf order (the artifact build
