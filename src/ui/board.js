@@ -98,7 +98,9 @@ class BoardController {
     if (m) { this.squares[m.from].classList.add('last'); this.squares[m.to].classList.add('last'); }
   }
   markHint(sq) { this.squares[sq].classList.add('hint'); }
-  clearHints() { this.squares.forEach(s => s && s.classList.remove('hint')); if (this.arrows) this.arrows.innerHTML = ''; }
+  /** Remove hint marks and arrows (move marks from showGlyph stay: clearGlyphs). */
+  clearHints() { this.squares.forEach(s => s && s.classList.remove('hint')); if (this.arrows) this.arrows.querySelectorAll(':scope > :not(.glyph)').forEach(x => x.remove()); }
+  clearGlyphs() { if (this.arrows) this.arrows.querySelectorAll('.glyph').forEach(x => x.remove()); }
   showArrow(from, to, kind) {
     if (!this.arrows) return;
     const [r1, c1] = this.rc(from), [r2, c2] = this.rc(to);
@@ -108,6 +110,38 @@ class BoardController {
     const pts = `0,${-hw} ${len - hl},${-hw} ${len - hl},${-hh} ${len},0 ${len - hl},${hh} ${len - hl},${hw} 0,${hw}`;
     const fill = kind === 'hint' ? '#FFC83D' : '#5CC181';
     this.arrows.insertAdjacentHTML('beforeend', `<polygon points="${pts}" transform="translate(${x1} ${y1}) rotate(${ang})" fill="${fill}" stroke="#23264A" stroke-width="5" stroke-linejoin="round" opacity=".95"/>`);
+  }
+
+  /** A move mark from the study (!, !?, !! …) as a round badge in the corner of a square. */
+  showGlyph(sq, glyph) {
+    if (!this.arrows || !glyph) return;
+    const [r, c] = this.rc(sq);
+    const color = { '!': '#22AC38', '!!': '#168226', '!?': '#22AC38', '?!': '#56B4E9', '?': '#E69F00', '??': '#DF5353' }[glyph] || '#22AC38';
+    const x = c * 100 + 82, y = r * 100 + 18, fs = glyph.length > 1 ? 30 : 38;
+    this.arrows.insertAdjacentHTML('beforeend', `<g class="glyph"><circle cx="${x}" cy="${y}" r="24" fill="${color}" stroke="#fff" stroke-width="4"/><text x="${x}" y="${y + fs * 0.36}" text-anchor="middle" font-size="${fs}" font-weight="800" font-family="system-ui, sans-serif" fill="#fff">${glyph}</text></g>`);
+  }
+
+  /** Take a move back, animated: `prev` is the position before the move. */
+  undoMove(m, prev) {
+    this._clearSelection(); this.clearHints(); this.clearGlyphs();
+    this.state = prev;
+    const pe = this.pieces[m.to]; this.pieces[m.to] = null; this.pieces[m.from] = pe;
+    if (pe) {
+      this._place(pe, m.from);
+      if (m.promo) { const u = pe.querySelector('use'); if (u) u.setAttribute('href', '#pc-p'); }
+    }
+    if (m.flag === 'k' || m.flag === 'q') {
+      const rf = m.flag === 'k' ? m.to + 1 : m.to - 2, rt = m.flag === 'k' ? m.to - 1 : m.to + 1;
+      const rook = this.pieces[rt]; this.pieces[rt] = null; this.pieces[rf] = rook; if (rook) this._place(rook, rf);
+    }
+    if (m.captured) {   // the taken piece comes back
+      const capSq = m.flag === 'e' ? ((m.from & ~7) | (m.to & 7)) : m.to;
+      const e = UI.h(`<div class="pc ${ChessCore.colorOf(m.captured)} back">${UI.piece(m.captured)}</div>`);
+      this._place(e, capSq); this.pieces[capSq] = e;
+      const layer = this.el.querySelector('.pcs'); if (layer) layer.append(e);
+    }
+    this._updateCheck();
+    UI.sound.move();
   }
 
   _updateCheck() {

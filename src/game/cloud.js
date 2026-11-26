@@ -47,11 +47,11 @@ const Cloud = (function () {
       if (!l) { S.players.push(Object.assign(rv, { synced: true })); dirty = true; continue; }
       // What was solved is never dropped: history and best results are joined from both
       // sides, whichever record is newer (otherwise a device with a stale copy wipes them).
-      const hist = mergeHistory(l.history, rv.history), best = mergeBest(l.best, rv.best);
-      const remoteMisses = hist.length > rv.history.length || Object.keys(best).length > Object.keys(rv.best).length;
-      const localMisses = hist.length > l.history.length || Object.keys(best).length > Object.keys(l.best).length;
+      const hist = mergeHistory(l.history, rv.history), best = mergeBest(l.best, rv.best), ops = mergeOpenings(l.openings, rv.openings);
+      const remoteMisses = hist.length > rv.history.length || Object.keys(best).length > Object.keys(rv.best).length || !sameOpenings(ops, rv.openings);
+      const localMisses = hist.length > l.history.length || Object.keys(best).length > Object.keys(l.best).length || !sameOpenings(ops, l.openings);
       if (rv.updatedAt > l.updatedAt && !busyIds.has(id)) { Object.assign(l, rv, { synced: true }); dirty = true; }
-      if (localMisses || remoteMisses) { l.history = hist; l.best = best; dirty = true; }
+      if (localMisses || remoteMisses) { l.history = hist; l.best = best; l.openings = ops; dirty = true; }
       if (remoteMisses) { l.updatedAt = Date.now(); l.synced = false; push_(l); }
       else if (rv.updatedAt < l.updatedAt) push_(l);
       else if (rv.updatedAt === l.updatedAt && !l.synced) { l.synced = true; dirty = true; }
@@ -71,6 +71,19 @@ const Cloud = (function () {
     for (const e of (a || []).concat(b || [])) m.set(e.t + '|' + e.id, e);
     return [...m.values()].sort((x, y) => y.t - x.t).slice(0, Progress.HISTORY_MAX);
   }
+  /** Opening results: the larger count and the better result of the two. */
+  function mergeOpenings(a, b) {
+    const o = {};
+    for (const k of new Set(Object.keys(a || {}).concat(Object.keys(b || {})))) {
+      const z = { n: 0, best: 0, t0: 0, got: 0 };
+      const x = Object.assign({}, z, (a || {})[k]), y = Object.assign({}, z, (b || {})[k]);
+      // the points window: the later one wins; the same window keeps the larger result
+      const w = x.t0 === y.t0 ? { t0: x.t0, got: Math.max(x.got, y.got) } : x.t0 > y.t0 ? { t0: x.t0, got: x.got } : { t0: y.t0, got: y.got };
+      o[k] = Object.assign({ n: Math.max(x.n, y.n), best: Math.max(x.best, y.best) }, w);
+    }
+    return o;
+  }
+  const sameOpenings = (a, b) => Object.keys(a).every(k => b && b[k] && ['n', 'best', 't0', 'got'].every(f => (b[k][f] || 0) === (a[k][f] || 0)));
   /** Best result per puzzle: the higher of the two. */
   function mergeBest(a, b) {
     const o = Object.assign({}, a);

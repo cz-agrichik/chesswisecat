@@ -19,10 +19,12 @@
       <h1 class="title"></h1>
       <div class="study">${UI.cat('big')}<div class="bubble" id="catSay"></div></div>
       <button class="cta" data-go><span class="cta-play" aria-hidden="true"></span><span class="cta-txt"><b>${esc(T.t('solve'))}</b><small></small></span></button>
+      <button class="btn wide opbtn" data-op><span aria-hidden="true">♞</span> ${esc(T.t('openings'))}</button>
       <div class="bookcase"><div class="bc-top">${esc(T.t('shelf'))}</div><div class="bc-body"></div></div>
     </section>`);
     el.querySelector('.title').textContent = T.t('appName');
-    el.querySelector('.cta').after(metersEl(pl));
+    el.querySelector('[data-op]').after(metersEl(pl));
+    el.querySelector('[data-op]').onclick = () => { UI.sound.unlock(); App.go('openings'); };
     el.querySelector('#catSay').textContent = !all ? T.t('soonPuzzles') : pl.played ? T.cat.welcomeBack(pl.name) : T.cat.hello(pl.name, GOAL);
     const cta = el.querySelector('[data-go]');
     if (all) {

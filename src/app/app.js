@@ -36,13 +36,13 @@ const App = (function () {
     applyLang();
     const app = $('#app'); app.innerHTML = '';
     if (!Progress.current() && screen !== 'players') screen = 'players';
-    if (screen !== 'play') app.append(topbar());
+    if (screen !== 'play' && screen !== 'opening') app.append(topbar());
     const s = screens[screen] || screens.home;
     const node = s.render(screenArg);   // null: the screen redirected elsewhere and rendered that
     if (node) app.append(node);
   }
   /** Data changed elsewhere (e.g. another device): redraw unless a puzzle or a dialog is open. */
-  function refresh() { if (screen !== 'play' && !document.querySelector('.modal-bd')) render(); }
+  function refresh() { if (screen !== 'play' && screen !== 'opening' && !document.querySelector('.modal-bd')) render(); }
 
   /* ---------- top bar: player, history, home, sound ---------- */
   function topbar() {
@@ -85,6 +85,25 @@ const App = (function () {
     return pts >= P.clean ? ['c2', '★★', 'resClean'] : pts >= P.withMistakes ? ['c1', '★', 'resMistakes'] : ['c0', '🌱', 'resGuided'];
   }
 
+  /* ---------- think-pause after a mistake (puzzles and openings) ---------- */
+  let pauseTimer = 0;
+  /** Grey the board and show a small hourglass with a countdown above its top edge. */
+  function showPause(board, ms) {
+    hidePause();
+    if (!board) return;
+    board.classList.add('paused');
+    const endAt = Date.now() + ms;
+    const badge = h(`<div class="pause-badge" role="timer" aria-label="${esc(T.t('think'))}"><span class="hg" aria-hidden="true">⏳</span><b></b><i style="animation-duration:${ms}ms"></i></div>`);
+    const tick = () => { const s = Math.max(0, Math.ceil((endAt - Date.now()) / 1000)); badge.querySelector('b').textContent = s; };
+    tick(); pauseTimer = setInterval(tick, 200);
+    board.append(badge);
+  }
+  function hidePause() {
+    clearInterval(pauseTimer); pauseTimer = 0;
+    document.querySelectorAll('.pause-badge').forEach(x => x.remove());
+    document.querySelectorAll('.board.paused').forEach(x => x.classList.remove('paused'));
+  }
+
   /* ---------- boot ---------- */
   function boot() {
     UI.injectSprite();
@@ -101,7 +120,7 @@ const App = (function () {
   return {
     screen: register, go, show, render, refresh, applyLang, boot,
     current: () => screen,
-    GOAL, bookColor, spineInk, lessonView, allBooks, pauseSecOf, resultMark,
+    GOAL, bookColor, spineInk, lessonView, allBooks, pauseSecOf, resultMark, showPause, hidePause,
     debug: () => ({ screen, session: App.play && App.play.session() }),
   };
 })();

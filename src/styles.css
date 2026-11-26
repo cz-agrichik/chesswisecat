@@ -426,8 +426,8 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 @media (min-width: 900px) and (orientation: landscape) {
   .home { max-width: 1060px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 32px; align-items: start; }
   .home > * { grid-column: 1; }
-  .home { grid-template-rows: repeat(4, auto) 1fr; }
-  .home > .bookcase { grid-column: 2; grid-row: 1 / span 5; margin-top: 8px; }
+  .home { grid-template-rows: repeat(5, auto) 1fr; }
+  .home > .bookcase { grid-column: 2; grid-row: 1 / span 6; margin-top: 8px; }
 }
 
 /* ---------- think-pause after a mistake ---------- */
@@ -490,3 +490,37 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
   .pav { width: 36px; height: 36px; font-size: 1.2rem; border-width: 2.5px; }
   .playbar .ptxt { font-size: .85rem; }
 }
+
+/* ---------- openings ---------- */
+.opbtn { margin-top: 14px; font-size: 1.2rem; gap: 8px; }
+.opbtn span { font-size: 1.5rem; line-height: 1; }
+.opsub { margin: -8px 2px 14px; font-weight: 700; }
+.oplist { display: grid; gap: 12px; }
+.opcard { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; color: var(--text); font: inherit; cursor: pointer; }
+.opcard:active { transform: translateY(3px); }
+.opicon { font-size: 2.2rem; line-height: 1; flex: none; }
+.optxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.optxt b { font-size: 1.2rem; font-weight: 800; }
+.optxt small { color: var(--muted); font-weight: 700; }
+.optxt small.opmain { font-weight: 600; font-style: italic; }
+.opking { flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--paper-2); display: grid; place-items: center; }
+.opking svg { width: 34px; height: 34px; }
+.opmoves-unused { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding: 10px 12px; font-weight: 700; white-space: nowrap; scrollbar-width: thin; }
+.opmoves .opn { color: var(--muted); }
+.opmoves .opm.mine { font-weight: 800; color: var(--text); background: var(--sun-soft); border-radius: 6px; padding: 0 4px; }
+.opmoves .nag { font-style: normal; color: #1F8A4C; margin-left: 1px; }
+.hearts.lives5 svg { width: 24px; height: 24px; }
+.opres { display: grid; gap: 6px; margin-bottom: 12px; font-weight: 700; }
+.opres > div { display: flex; justify-content: space-between; gap: 10px; }
+.opres .sub { color: var(--muted); }
+.opres .tot { font-size: 1.2rem; font-weight: 800; border-top: 2px dashed var(--grey); padding-top: 6px; }
+.hrow.op .hicon { font-style: normal; font-size: 1rem; line-height: 1; }
+.hrow .hpts { grid-column: span 2; font-weight: 800; white-space: nowrap; text-align: right; }
+@media (max-width: 420px) { .hearts.lives5 svg { width: 19px; height: 19px; } .hearts.lives5 { gap: 1px; } }
+.opening .ptxt b { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* a good move that is not the one we learn: a short green blink */
+.board.good::after { content: ""; position: absolute; inset: 0; border-radius: 14px; background: rgba(92, 193, 129, .55); pointer-events: none; animation: goodblink 1s ease-out forwards; z-index: 5; }
+@keyframes goodblink { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+.pc.back { animation: backin .3s ease-out; }
+@keyframes backin { from { opacity: 0; } }

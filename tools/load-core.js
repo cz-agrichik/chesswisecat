@@ -17,7 +17,8 @@ function loadCore() {
     const f = `data/books/${b.id}.js`;
     if (fs.existsSync(path.join(SRC, f))) run(f);
   }
-  for (const f of ['core/chess.js', 'core/puzzle-source.js', 'ui/texts.js']) run(f);
+  run('data/openings.js');
+  for (const f of ['core/chess.js', 'core/puzzle-source.js', 'core/pgn.js', 'ui/texts.js']) run(f);
   for (const f of fs.readdirSync(path.join(SRC, 'i18n')).sort()) run('i18n/' + f);
   return ctx;
 }

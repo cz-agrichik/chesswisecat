@@ -39,7 +39,7 @@ const Texts = (function () {
   const isLang = c => !!D[c];
 
   // Lists that are data, not "pick one at random".
-  const KEEP = new Set(['pointsW', 'lessonsW', 'puzzlesW', 'avatars', 'pieceName', 'genders']);
+  const KEEP = new Set(['pointsW', 'lessonsW', 'puzzlesW', 'avatars', 'pieceName', 'genders']);   // objects (nag, openingNames, openingMain) are returned as they are
   function t(key, ...args) {
     let v = D[lang] && D[lang][key];
     if (v === undefined) v = D.en && D.en[key];
@@ -59,6 +59,9 @@ const Texts = (function () {
   const bookShort = vol => bookEntry(vol.id)[1];
 
   /** First line of a puzzle: whose side + "find the best move". Says nothing about the puzzle itself. */
+  /** Opening name in the current language. */
+  const openingName = id => (t('openingNames') || {})[id] || id;
+
   const goal = (p, color) => `${t('side', color)} ${t('findBest')}`;
 
   const cat = {
@@ -76,7 +79,7 @@ const Texts = (function () {
   };
 
   return {
-    add, LANGS, GENDERS, isLang, t, word, points, plural, pick, signed, goal, cat, bookTitle, bookShort,
+    add, LANGS, GENDERS, isLang, t, openingName, word, points, plural, pick, signed, goal, cat, bookTitle, bookShort,
     setLang: c => { lang = isLang(c) ? c : 'en'; },
     setGender: x => { gender = GENDERS.includes(x) ? x : 'n'; }, gender: () => gender,
     isGender: x => GENDERS.includes(x), genderName: x => t('genders')[x],

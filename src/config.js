@@ -31,6 +31,14 @@ const CONFIG = {
   mistakePauseSec: 3,
   pauseOptions: [0, 2, 3, 5, 10],
 
+  // Openings (the "Openings" button, data/openings.js): lives per run; points for the
+  // main line (only while lives are left) and, at the end, perLife for each life left —
+  // or tourBonus when the lives were all spent and the arrows led the way.
+  // Best case 3 + 5 × 2 = 13. A mistake gives one think-pause of the player's pauseSec.
+  // Replaying an opening within windowHours gives only the points not earned yet in
+  // that window (best 7 so far, now 11 → +4); after windowHours the full points again.
+  openings: { lives: 5, mainLine: 3, sideLine: 1, perLife: 2, tourBonus: 2, windowHours: 12 },
+
   soundOnByDefault: true,
   storageKey: 'chesswisecat.v1',
   legacyStorageKeys: ['shakhmatyata.v2'],   // names and avatars are carried over from these

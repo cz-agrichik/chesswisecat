@@ -52,6 +52,18 @@ module.exports = {
       }
     }
 
+    // openings: every study parses, has lines to learn and a name in every language
+    for (const o of ctx.OPENINGS) {
+      const g = ctx.Pgn.parseGame(o.pgn);
+      const lines = ctx.Pgn.lines(g.root, g.player);
+      assert(lines.length && lines[0].moves.length, `opening ${o.id}: nothing to learn`);
+      for (const code of langs) { T.setLang(code); assert(T.openingName(o.id) !== o.id, `i18n/${code}.js: no name for opening '${o.id}'`); }
+    }
+    T.setLang('en');
+    const it = ctx.Pgn.parseGame(ctx.OPENINGS.find(o => o.id === 'italian').pgn);
+    const total = ctx.Pgn.lines(it.root, it.player).reduce((a, l) => a + l.moves.length, 0);
+    assert(total === 26, 'italian: the study has 26 moves of ours, parsed ' + total);
+
     // index.html loads files that exist
     for (const f of pageFiles()) assert(fs.existsSync(path.join(SRC, f)), `index.html loads missing src/${f}`);
   },

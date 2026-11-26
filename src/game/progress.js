@@ -26,7 +26,7 @@ const Progress = (function () {
       id, v: SCHEMA, name: cleanName(name) || Texts.t('defaultName'), avatar: validAvatar(avatar) ? avatar : AVATARS[0],
       rating: CONFIG.rating.start, bestRating: CONFIG.rating.start,
       points: 0, played: 0, clean: 0, best: {}, recent: [], lesson: null, lessonsDone: 0,
-      pauseSec: CONFIG.mistakePauseSec, lang: 'en', gender: 'n', history: [],
+      pauseSec: CONFIG.mistakePauseSec, lang: 'en', gender: 'n', history: [], openings: {},
       createdAt: now, updatedAt: now,
     };
   }
@@ -47,17 +47,23 @@ const Progress = (function () {
       for (const k of Object.keys(v.best).slice(0, 50000)) p.best[String(k).slice(0, 40)] = Math.min(CONFIG.points.clean, int(v.best[k]));
     }
     if (Array.isArray(v.history)) p.history = v.history.slice(0, HISTORY_MAX).map(cleanEntry).filter(Boolean);
+    if (v.openings && typeof v.openings === 'object') {
+      for (const k of Object.keys(v.openings).slice(0, 100)) { const o = v.openings[k] || {}; p.openings[String(k).slice(0, 40)] = { n: int(o.n), best: int(o.best), t0: int(o.t0), got: int(o.got) }; }
+    }
     if (Array.isArray(v.recent)) p.recent = v.recent.filter(x => typeof x === 'string').map(x => x.slice(0, 40)).slice(0, 50);
     const L = v.lesson;
     if (L && typeof L === 'object') p.lesson = { num: int(L.num, 1), pts: int(L.pts), n: int(L.n), clean: int(L.clean), r0: int(L.r0) };
     return p;
   }
   /** One history entry: t time (ms), id puzzle, v book id, r puzzle rating, s points (2 clean / 1 mistakes / 0 arrows),
-      d rating change, R rating after. Newest first. */
+      d rating change, R rating after. Newest first. An opening run: k 'o', id the opening, s its points. */
   function cleanEntry(e) {
     if (!e || typeof e !== 'object' || typeof e.id !== 'string') return null;
-    return { t: int(e.t), id: e.id.slice(0, 40), v: String(e.v || '').slice(0, 40), r: int(e.r), s: Math.min(2, int(e.s)),
+    const o = e.k === 'o';   // an opening run: s = points earned (up to 13), not 0..2
+    const out = { t: int(e.t), id: e.id.slice(0, 40), v: String(e.v || '').slice(0, 40), r: int(e.r), s: Math.min(o ? 99 : 2, int(e.s)),
       d: Number.isFinite(+e.d) ? Math.round(+e.d) : 0, R: int(e.R) };
+    if (o) out.k = 'o';
+    return out;
   }
 
   function load() {
@@ -152,13 +158,41 @@ const Progress = (function () {
     if (p.history.length > HISTORY_MAX) p.history.length = HISTORY_MAX;
 
     L.pts += pts; L.n++; if (win) L.clean++;
-    let lessonDone = null;
-    if (L.pts >= CONFIG.lessonGoal) {
-      lessonDone = Object.assign({}, L, { pts: Math.min(L.pts, CONFIG.lessonGoal), r1: p.rating });
-      p.lessonsDone++; p.lesson = null;
-    }
+    const lessonDone = closeLesson(p, L);
     touch(p);
     return { points: pts, win, rating: p.rating, delta: p.rating - before, lesson: lessonDone || Object.assign({}, L), lessonDone };
+  }
+  /** The lesson is complete when its points reach the goal: returns the finished lesson. */
+  function closeLesson(p, L) {
+    if (L.pts < CONFIG.lessonGoal) return null;
+    const done = Object.assign({}, L, { pts: Math.min(L.pts, CONFIG.lessonGoal), r1: p.rating });
+    p.lessonsDone++; p.lesson = null;
+    return done;
+  }
+
+  /** An opening's points window (CONFIG.openings.windowHours): { t0, got } — when it
+      started and the best result earned in it; null when no window is open now. */
+  function openingWindow(p, id, now = Date.now()) {
+    const o = p.openings && p.openings[id], W = CONFIG.openings.windowHours * 3600e3;
+    return o && o.t0 && now - o.t0 < W ? { t0: o.t0, got: o.got, ends: o.t0 + W } : null;
+  }
+  /** Record a finished opening run: the child gets only the points not earned yet in
+      the current window (they go to the player and the lesson; no rating change); the
+      run goes to the history; the best result per opening is kept. */
+  function recordOpening(p, id, total) {
+    const L = lessonOf(p), now = Date.now();
+    total = int(total);
+    const o = Object.assign({ n: 0, best: 0, t0: 0, got: 0 }, p.openings[id]);
+    if (!openingWindow(p, id, now)) { o.t0 = now; o.got = 0; }
+    const before = o.got, award = Math.max(0, total - before);
+    o.got = Math.max(before, total); o.n++; o.best = Math.max(o.best, total);
+    p.openings[id] = o;
+    p.points += award; L.pts += award;
+    p.history.unshift({ t: now, id, v: '', r: total, s: award, d: 0, R: p.rating, k: 'o' });
+    if (p.history.length > HISTORY_MAX) p.history.length = HISTORY_MAX;
+    const lessonDone = closeLesson(p, L);
+    touch(p);
+    return { award, total, before, lesson: lessonDone || Object.assign({}, L), lessonDone };
   }
 
   /** Ticks for a volume: how many puzzles were met / solved / solved cleanly. */
@@ -174,7 +208,7 @@ const Progress = (function () {
 
   return {
     AVATARS, NAME_MAX, HISTORY_MAX, state: S, load, save, current, setCurrent, addPlayer, updatePlayer, removePlayer, setMuted,
-    record, pointsFor, expected, lessonOf, volumeStats,
+    record, recordOpening, openingWindow, pointsFor, expected, lessonOf, volumeStats,
     initCloud: () => Cloud.init(), markBusy: (id, on) => Cloud.markBusy(id, on),
     onChange: fn => listeners.add(fn),
     // for game/cloud.js only

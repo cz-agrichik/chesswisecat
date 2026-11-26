@@ -38,13 +38,14 @@
     const fmtDay = new Intl.DateTimeFormat(T.locale(), { weekday: 'short', day: 'numeric', month: 'long' });
     const fmtTime = new Intl.DateTimeFormat(T.locale(), { hour: '2-digit', minute: '2-digit', hour12: false });
     const first = g.items[g.items.length - 1], last = g.items[0];
-    const clean = g.items.filter(e => e.s >= CONFIG.points.clean).length;
+    const clean = g.items.filter(e => e.k !== 'o' && e.s >= CONFIG.points.clean).length;
     const r0 = first.R - first.d, r1 = last.R;
     const head = h(`<div class="hday-h"><b></b><span></span><em class="${r1 > r0 ? 'up' : r1 < r0 ? 'down' : ''}">🏅 ${r0} → ${r1}</em></div>`);
     head.querySelector('b').textContent = g.k === today ? T.t('today') : g.k === yest ? T.t('yesterday') : fmtDay.format(new Date(last.t));
     head.querySelector('span').textContent = T.t('histDay', g.items.length, clean);
     const list = h('<div class="card hlist"></div>');
     for (const e of g.items) {
+      if (e.k === 'o') { list.append(openingRow(e, fmtTime)); continue; }
       const vol = PuzzleSource.getVolume(e.v), res = App.resultMark(e.s);
       const row = h(`<a class="hrow" target="_blank" rel="noopener" href="https://lichess.org/training/${encodeURIComponent(e.id)}">
         <small class="htime">${fmtTime.format(new Date(e.t))}</small>
@@ -55,6 +56,16 @@
       list.append(row);
     }
     return [head, list];
+  }
+
+  /** An opening run: its name and the points it gave. */
+  function openingRow(e, fmtTime) {
+    const o = (typeof OPENINGS !== 'undefined' ? OPENINGS : []).find(x => x.id === e.id);
+    const row = h(`<div class="hrow op"><small class="htime">${fmtTime.format(new Date(e.t))}</small>
+      <i class="hicon" aria-hidden="true">${o && o.icon || '♞'}</i><span class="hbook"></span><span class="hpr"></span>
+      <span class="hpts">+${e.s} ⭐</span></div>`);
+    row.querySelector('.hbook').textContent = `${T.t('openings')}: ${T.openingName(e.id)}`;
+    return row;
   }
 
   /** Small rating line over the stored history (oldest → newest). */

@@ -15,13 +15,15 @@
 <script>
   /* VERSION — поднимать при каждом изменении файлов в src/: новый номер = новые адреса,
      и браузер не возьмёт старые скрипты из кеша. Порядок FILES важен. */
-  const VERSION = '44';
+  const VERSION = '50';
   const FILES = [
     'styles.css',
     'config.js',
     'data/books.js',          // the shelf; it loads data/books/<id>.js itself
+    'data/openings.js',
     'core/chess.js',
     'core/puzzle-source.js',
+    'core/pgn.js',
     'ui/texts.js',
     'i18n/en.js',
     'i18n/ru.js',
@@ -29,6 +31,7 @@
     'ui/visuals.js',
     'ui/board.js',
     'game/puzzle-controller.js',
+    'game/opening-controller.js',
     'game/progress.js',
     'game/cloud.js',
     'app/app.js',
@@ -38,6 +41,7 @@
     'app/results.js',
     'app/history.js',
     'app/players.js',
+    'app/openings.js',
     'app/main.js'
   ];
   for (const f of FILES) document.write(f.endsWith('.css')
