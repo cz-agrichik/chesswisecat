@@ -64,6 +64,27 @@ module.exports = {
     const total = ctx.Pgn.lines(it.root, it.player).reduce((a, l) => a + l.moves.length, 0);
     assert(total === 26, 'italian: the study has 26 moves of ours, parsed ' + total);
 
+    // random order: the same lines and moves, one main line, depth first (each line parts from the one before)
+    for (const o of ctx.OPENINGS) {
+      const g = ctx.Pgn.parseGame(o.pgn), L0 = ctx.Pgn.lines(g.root, g.player);
+      const total = L0.reduce((a, l) => a + l.moves.length, 0);
+      assert(L0[0].main && L0.filter(l => l.main).length === 1, `${o.id}: in PGN order the main line is first`);
+      for (let t = 0; t < 50; t++) {
+        const L = ctx.Pgn.lines(g.root, g.player, Math.random);
+        assert(L.length === L0.length && L.reduce((a, l) => a + l.moves.length, 0) === total, `${o.id}: a random order changes the lines`);
+        assert(L.filter(l => l.main).length === 1, `${o.id}: one main line`);
+        const leaves = new Set(L.map(l => l.path[l.path.length - 1]));
+        assert(L0.every(l => leaves.has(l.path[l.path.length - 1])), `${o.id}: a line is lost in a random order`);
+      }
+    }
+    {
+      // 3 moves vs 1 vs 1 → 60% / 20% / 20% for the first pick
+      const w = { a: 3, b: 1, c: 1 }, cnt = { a: 0, b: 0, c: 0 }, N = 20000;
+      for (let t = 0; t < N; t++) cnt[ctx.Pgn.weightedShuffle(['a', 'b', 'c'], x => w[x])[0]]++;
+      const f = ['a', 'b', 'c'].map(x => cnt[x] / N);
+      assert(Math.abs(f[0] - 0.6) < 0.02 && Math.abs(f[1] - 0.2) < 0.02 && Math.abs(f[2] - 0.2) < 0.02, 'weighted pick: ' + f.join());
+    }
+
     // index.html loads files that exist
     for (const f of pageFiles()) assert(fs.existsSync(path.join(SRC, f)), `index.html loads missing src/${f}`);
   },

@@ -10,9 +10,14 @@
      moves there are "also good" (accepted as good, but the child is asked to play
      the main one).
    - At the opponent's turn every move in the PGN is a separate line to learn.
-   Lines come in depth-first order: the main line first, then each other opponent
-   reply, starting from the deepest branch. Each line knows where it parts from the
-   previous one (from), so the next line starts right at that position. */
+   Pgn.lines lists them in depth-first order: down one branch to its end, then back to
+   the nearest fork that still has unlearned replies, and down again. Each line knows
+   where it parts from the line before it (from): the moves before `from` are already
+   learned, the line teaches the rest. In PGN order the main line comes first; with
+   `rnd` the replies at every fork of the opponent are shuffled, weighted by how many
+   moves are to learn down each reply (3 vs 1 vs 1 → 60% / 20% / 20%), so a child may
+   start deep in a side line and come back to the main line later. The main line (the
+   first move everywhere) is marked `main`. */
 const Pgn = (function () {
   const C = ChessCore;
   const NAGS = { 1: '!', 2: '?', 3: '!!', 4: '??', 5: '!?', 6: '?!' };
@@ -85,15 +90,35 @@ const Pgn = (function () {
     return String(text).split(/\n\s*\n(?=\s*\[Event )/).map(t => t.trim()).filter(t => t).map(parseGame);
   }
 
+  /** Items in a random order, weighted: the first pick is items[i] with chance weight(i) / sum. */
+  function weightedShuffle(items, weight, rnd = Math.random) {
+    const left = items.slice(), out = [];
+    while (left.length) {
+      const sum = left.reduce((a, x) => a + weight(x), 0);
+      let k = 0;
+      if (sum > 0) { let r = rnd() * sum; while (k < left.length - 1 && (r -= weight(left[k])) >= 0) k++; }
+      out.push(left.splice(k, 1)[0]);
+    }
+    return out;
+  }
+
   /** The lines to learn, see the top of the file. Each: { path: [nodes], from: index of
-      the first node that is new compared to the previous line, moves: indexes of the
-      child's moves in path (only those at or after `from`) }. */
-  function lines(root, player) {
+      the first node that is new compared to the lines before, moves: indexes of the
+      child's moves in path (only those at or after `from`), main: the main line }.
+      rnd (optional): shuffle the opponent's replies at every fork, weighted. */
+  function lines(root, player, rnd) {
+    const next = node => (node.state.turn === player ? node.children.slice(0, 1) : node.children);
+    const W = new Map();   // node → the child's moves to learn below it
+    const weight = node => {
+      if (!W.has(node)) W.set(node, next(node).reduce((a, c) => a + (node.state.turn === player ? 1 : 0) + weight(c), 0));
+      return W.get(node);
+    };
     const raw = [];
     (function walk(node, path) {
-      if (!node.children.length) { raw.push(path); return; }
-      if (node.state.turn === player) walk(node.children[0], path.concat(node.children[0]));
-      else for (const c of node.children) walk(c, path.concat(c));
+      const kids = next(node);
+      if (!kids.length) { raw.push(path); return; }
+      const order = rnd && kids.length > 1 ? weightedShuffle(kids, c => (node.state.turn === player ? 1 : 0) + weight(c), rnd) : kids;
+      for (const c of order) walk(c, path.concat(c));
     })(root, []);
     const out = [];
     let prev = [];
@@ -107,7 +132,7 @@ const Pgn = (function () {
       const moves = [];
       for (let i = from; i < path.length; i++) if (path[i].parent.state.turn === player) moves.push(i);
       if (!moves.length) continue;
-      out.push({ path, from, moves });
+      out.push({ path, from, moves, main: full.every(n => n === n.parent.children[0]) });
       prev = path;
     }
     return out;
@@ -116,5 +141,5 @@ const Pgn = (function () {
   /** The other good moves at a node where the child is to move (all but the main one). */
   const alternatives = node => node.parent.children.filter(n => n !== node);
 
-  return { san, moveFromSan, parseGame, parseStudy, lines, alternatives };
+  return { san, moveFromSan, parseGame, parseStudy, lines, weightedShuffle, alternatives };
 })();

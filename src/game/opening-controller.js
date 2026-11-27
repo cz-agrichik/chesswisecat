@@ -1,7 +1,10 @@
 /* game/opening-controller.js — OpeningController: learning one opening (a PGN study,
    see core/pgn.js) on a BoardController. The child goes through every line of the
-   study: the main line first, then each other reply of the opponent. Before a new
-   line the moves are taken back on the board, one by one, to where it parts.
+   study, branch by branch: at every fork of the opponent a reply is picked at random,
+   weighted by how much there is to learn down it; at the end of a branch the moves
+   are taken back to the nearest fork with replies still to learn, and so on
+   (Pgn.lines with rnd). The main line is just one of the branches, it may come later.
+   Before a new line the moves are taken back on the board, one by one, to the fork.
 
    At each of the child's moves:
    - the main move of the study → correct, go on;
@@ -12,12 +15,13 @@
    When the lives are over the child still goes through the whole study, but every
    mistake shows the arrow at once ("tour" mode).
 
-   Points (CONFIG.openings): every line finished with lives left is celebrated and gives
+   Points (CONFIG.openings): every line is celebrated; finished with lives left it gives
    mainLine (the main line) or sideLine (each other line); at the end perLife for every
    life left, or tourBonus if the lives were all spent. Opening.max(game) is the most.
 
    Events (onEvent(type, data)):
-     'line-start'  — { index, count } a line begins (index 0 = the main line); for the
+     'line-start'  — { index, main, count } a line begins (index: how many lines are
+                     done before it, main: it is the main line); for the
                      next lines this comes before the moves are taken back
      'your-turn'   — { first } the child to move
      'correct'     — { node } the main move was played (node.nag may be '!', '!?' …)
@@ -29,23 +33,24 @@
      'tour'        — the lives are over: arrows from now on
      'guide-turn'  — the child is to play the arrow move
      'guide-wrong' — another move while the arrow is shown (no penalty)
-     'line-done'   — { index, bonus, last } a line is finished (index 0 = the main line);
+     'line-done'   — { index, main, bonus, last } a line is finished;
                      the next line (if not last) starts after a short celebration
      'done'        — { main, lines, end, total, lives, tour } the whole study is finished:
                      main + lines (the other lines) + end (lives or tour bonus)   */
 class OpeningController {
-  constructor(board, game, { lives = 5, pauseMs = 0, onEvent } = {}) {
+  constructor(board, game, { lives = 5, pauseMs = 0, onEvent, rnd = Math.random } = {}) {
     this.board = board;
     this.game = game;
     this.player = game.player;
-    this.lines = Pgn.lines(game.root, game.player);
+    this.lines = Pgn.lines(game.root, game.player, rnd);   // in the order they are learned
+    this.order = this.lines.map((_, i) => i);
     this.total = this.lines.reduce((a, l) => a + l.moves.length, 0);
     this.lives = lives; this.startLives = lives;
     this.pauseMs = pauseMs;
     this.emit = onEvent || (() => {});
     this.timers = new Set();
     this.done = 0; this.tour = false; this.mainBonus = 0; this.linesBonus = 0;
-    this.li = 0; this.pos = 0; this.cur = null; this.guide = false; this.nodeMistakes = 0;
+    this.li = 0; this.k = 0; this.pos = 0; this.cur = null; this.guide = false; this.nodeMistakes = 0;
     this.phase = 'idle';   // intro | opponent | player | paused | between | done
     board.onAttempt = m => this._attempt(m);
   }
@@ -62,25 +67,33 @@ class OpeningController {
   }
   get node() { const L = this.lines[this.li]; return L ? L.path[this.pos] : null; }
 
-  _startLine(i) {
-    const prev = i ? this.lines[i - 1] : null;
-    this.li = i;
+  _startLine(k) {
+    const prev = k ? this.lines[this.order[k - 1]] : null;
+    const i = this.order[k];
+    this.k = k; this.li = i;
     const L = this.lines[i];
     this.board.setInteractive(null);
     this.phase = 'intro';
+    this.emit('line-start', { index: k, main: L.main, count: this.lines.length });
     if (!prev) {
       this.pos = L.from;
       this.board.setPosition(this.game.root.state, this.player);
-      this.emit('line-start', { index: i, count: this.lines.length });
       return this.later(800, () => this._advance(true));
     }
-    // take the moves back, one by one, to where the new line parts from the old one
-    this.emit('line-start', { index: i, count: this.lines.length });
-    let k = prev.path.length;
+    // take the moves back, one by one, to where the two lines part …
+    let common = 0;
+    while (common < prev.path.length && common < L.path.length && prev.path[common] === L.path[common]) common++;
+    let at = prev.path.length;
+    const ready = () => { this.pos = L.from; this.board.setLastMove(L.from ? L.path[L.from - 1].move : null); this.later(900, () => this._advance(true)); };
+    const forward = () => {   // … then forward again, the moves already learned, to where the new line starts
+      if (at >= L.from) return ready();
+      this._play(L.path[at++]);
+      this.later(380, forward);
+    };
     const back = () => {
-      if (k <= L.from) { this.pos = L.from; this.board.setLastMove(L.from ? L.path[L.from - 1].move : null); return this.later(900, () => this._advance(true)); }
-      k--;
-      const n = prev.path[k];
+      if (at <= common) { this.board.clearGlyphs(); return at >= L.from ? ready() : this.later(500, forward); }
+      at--;
+      const n = prev.path[at];
       this.board.undoMove(n.move, n.parent.state);
       this.later(380, back);
     };
@@ -157,11 +170,12 @@ class OpeningController {
   _lineDone() {
     this.phase = 'between'; this.board.setInteractive(null); this.board.clearHints();
     const P = CONFIG.openings;
-    const last = this.li + 1 >= this.lines.length;
-    const bonus = this.tour ? 0 : this.li === 0 ? P.mainLine : P.sideLine;
-    if (this.li === 0) this.mainBonus = bonus; else this.linesBonus += bonus;
-    this.emit('line-done', { index: this.li, bonus, last });
-    if (!last) this.later(2600, () => this._startLine(this.li + 1));
+    const last = this.k + 1 >= this.order.length;
+    const main = this.lines[this.li].main;
+    const bonus = this.tour ? 0 : main ? P.mainLine : P.sideLine;
+    if (main) this.mainBonus = bonus; else this.linesBonus += bonus;
+    this.emit('line-done', { index: this.k, main, bonus, last });
+    if (!last) this.later(2600, () => this._startLine(this.k + 1));
     else this.later(300, () => this._finish());
   }
 

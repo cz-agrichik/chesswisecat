@@ -125,7 +125,7 @@
         else if (type === 'tour') { UI.sound.bad(); UI.vibrate(90); hearts(0, true); say(T.t('opTour')); }
         else if (type === 'guide-turn') progress();
         else if (type === 'guide-wrong') { UI.vibrate(40); say(T.cat.guideWrong()); }
-        else if (type === 'line-done') { if (!d.last) { UI.sound.win(); UI.confetti(d.index ? 40 : 60); say(T.t(d.index ? 'opLineDone' : 'opMainDone', d.bonus)); } }
+        else if (type === 'line-done') { if (!d.last) { UI.sound.win(); UI.confetti(d.main ? 60 : 40); say(T.t(d.main ? 'opMainDone' : 'opLineDone', d.bonus)); } }
         else if (type === 'done') finish(d);
       },
     });

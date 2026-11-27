@@ -40,7 +40,7 @@ module.exports = {
     await shot(p, 'openings-list');
     await p.click('.opcard >> nth=0'); await p.waitForTimeout(300);
     let s = await waitPlayer(p);
-    assert(s.lives === 5 && s.li === 0, 'start: 5 lives, main line');
+    assert(s.lives === 5 && s.li === 0, 'start: 5 lives, the first line');
 
     await play(p, 'alt'); await p.waitForTimeout(20); s = await st(p);
     assert(s.lives === 5 && s.guide && s.phase === 'paused', 'another good move: no life lost, a short blink');
