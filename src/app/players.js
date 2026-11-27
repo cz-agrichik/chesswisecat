@@ -1,5 +1,6 @@
 /* app/players.js — choosing, creating, editing and deleting players. Settings per
-   player: name, avatar, language, gender, pause after a mistake. */
+   player: name, avatar, language, gender, pause after a mistake, rating (set by hand:
+   for a new player the start, later a change that shows in the history). */
 (function () {
   const { h, esc } = UI;
   const T = Texts;
@@ -26,7 +27,7 @@
   /** Create (p = null) or edit a player. Changing the language redraws the form in
       that language straight away; closing without saving goes back to the player's own. */
   function playerModal(p, draft) {
-    const d = draft || { name: p ? p.name : '', av: p ? Progress.AVATARS.indexOf(p.avatar) : 0, ps: App.pauseSecOf(p), lang: p ? p.lang : T.lang(), gender: p ? p.gender : 'n' };
+    const d = draft || { name: p ? p.name : '', av: p ? Progress.AVATARS.indexOf(p.avatar) : 0, ps: App.pauseSecOf(p), lang: p ? p.lang : T.lang(), gender: p ? p.gender : 'n', rt: p ? p.rating : CONFIG.rating.start };
     T.setLang(d.lang); T.setGender(d.gender);
     const el = h(`<form autocomplete="off"><h2>${esc(T.t(p ? 'editPlayer' : 'newPlayer'))}</h2>
       <p class="field" style="margin:0">${esc(T.t('language'))}</p>
@@ -38,6 +39,7 @@
       <div class="avs">${Progress.AVATARS.map((a, i) => `<button type="button" class="avb ${i === d.av ? 'on' : ''}" data-i="${i}" aria-label="${esc(T.avName(i))}">${a}</button>`).join('')}</div>
       <p class="field" style="margin:0">${esc(T.t('pauseLabel'))}</p>
       <div class="seg ps" role="radiogroup" aria-label="${esc(T.t('pauseLabel'))}">${CONFIG.pauseOptions.map(s => `<button type="button" class="segb" data-s="${s}" role="radio">${esc(s ? T.t('sec', s) : T.t('none'))}</button>`).join('')}</div>
+      <label class="field">🏅 ${esc(T.t('ratingLabel'))}<input name="rt" type="number" inputmode="numeric" min="${CONFIG.rating.floor}" max="${Progress.RATING_MAX}" step="1"><small class="muted fieldhint">${esc(T.t(p ? 'ratingHintEdit' : 'ratingHintNew'))}</small></label>
       <button class="btn wide" type="submit">${esc(T.t(p ? 'save' : 'done'))}</button>
       ${p ? `<button type="button" class="linkbtn danger" data-del>🗑 ${esc(T.t('delPlayer'))}</button>` : ''}</form>`);
     const mark = (sel, attr, val) => el.querySelectorAll(sel).forEach(x => { const on = x.dataset[attr] === String(val); x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
@@ -46,6 +48,8 @@
     el.querySelectorAll('.ps .segb').forEach(b => b.onclick = () => { d.ps = +b.dataset.s; mark('.ps .segb', 's', d.ps); });
     el.nm.value = d.name;
     el.nm.oninput = () => { d.name = el.nm.value; };
+    el.rt.value = d.rt;
+    el.rt.oninput = () => { d.rt = el.rt.value; };
     el.querySelectorAll('.avb').forEach(b => b.onclick = () => { d.av = +b.dataset.i; el.querySelectorAll('.avb').forEach(x => x.classList.toggle('on', x === b)); });
     const close = UI.modal(el, () => App.render());
     el.querySelectorAll('.lang .segb').forEach(b => b.onclick = () => {
@@ -56,8 +60,12 @@
     if (del) del.onclick = () => { close(true); deleteModal(p); };
     el.onsubmit = e => {
       e.preventDefault();
-      if (p) { Progress.updatePlayer(p.id, { name: d.name, avatarIdx: d.av, pauseSec: d.ps, lang: d.lang, gender: d.gender }); close(true); App.render(); }
-      else { Progress.addPlayer(d.name, d.av, d.ps, d.lang, d.gender); close(true); App.go('home'); }
+      const rt = String(d.rt).trim() === '' || !Number.isFinite(+d.rt) ? null : +d.rt;
+      if (p) {
+        Progress.updatePlayer(p.id, { name: d.name, avatarIdx: d.av, pauseSec: d.ps, lang: d.lang, gender: d.gender });
+        if (rt !== null) Progress.setRating(p, rt);
+        close(true); App.render();
+      } else { Progress.addPlayer(d.name, d.av, d.ps, d.lang, d.gender, rt === null ? undefined : rt); close(true); App.go('home'); }
     };
   }
 

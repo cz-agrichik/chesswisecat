@@ -17,7 +17,8 @@
     </div>`));
     if (!H.length) { el.append(h(`<p class="card hempty">${esc(T.t('histEmpty'))}</p>`)); return el; }
     el.append(ratingChart(H));
-    el.append(h(`<p class="muted hlast">${esc(T.t('histLast', H.length))}</p>`));
+    const nPuzzles = H.filter(e => !e.k).length;
+    if (nPuzzles) el.append(h(`<p class="muted hlast">${esc(T.t('histLast', nPuzzles))}</p>`));
     for (const g of byDay(H)) el.append(...dayBlock(g));
     return el;
   }
@@ -38,14 +39,15 @@
     const fmtDay = new Intl.DateTimeFormat(T.locale(), { weekday: 'short', day: 'numeric', month: 'long' });
     const fmtTime = new Intl.DateTimeFormat(T.locale(), { hour: '2-digit', minute: '2-digit', hour12: false });
     const first = g.items[g.items.length - 1], last = g.items[0];
-    const clean = g.items.filter(e => e.k !== 'o' && e.s >= CONFIG.points.clean).length;
+    const puzzles = g.items.filter(e => !e.k), clean = puzzles.filter(e => e.s >= CONFIG.points.clean).length;
     const r0 = first.R - first.d, r1 = last.R;
     const head = h(`<div class="hday-h"><b></b><span></span><em class="${r1 > r0 ? 'up' : r1 < r0 ? 'down' : ''}">🏅 ${r0} → ${r1}</em></div>`);
     head.querySelector('b').textContent = g.k === today ? T.t('today') : g.k === yest ? T.t('yesterday') : fmtDay.format(new Date(last.t));
-    head.querySelector('span').textContent = T.t('histDay', g.items.length, clean);
+    head.querySelector('span').textContent = puzzles.length ? T.t('histDay', puzzles.length, clean) : '';
     const list = h('<div class="card hlist"></div>');
     for (const e of g.items) {
       if (e.k === 'o') { list.append(openingRow(e, fmtTime)); continue; }
+      if (e.k === 'r') { list.append(ratingRow(e, fmtTime)); continue; }
       const vol = PuzzleSource.getVolume(e.v), res = App.resultMark(e.s);
       const row = h(`<a class="hrow" target="_blank" rel="noopener" href="https://lichess.org/training/${encodeURIComponent(e.id)}">
         <small class="htime">${fmtTime.format(new Date(e.t))}</small>
@@ -65,6 +67,15 @@
       <i class="hicon" aria-hidden="true">${o && o.icon || '♞'}</i><span class="hbook"></span><span class="hpr"></span>
       <span class="hpts">+${e.s} ⭐</span></div>`);
     row.querySelector('.hbook').textContent = `${T.t('openings')}: ${T.openingName(e.id)}`;
+    return row;
+  }
+
+  /** The rating set by hand: before → after. */
+  function ratingRow(e, fmtTime) {
+    const row = h(`<div class="hrow rset"><small class="htime">${fmtTime.format(new Date(e.t))}</small>
+      <i class="hicon" aria-hidden="true">✏️</i><span class="hbook"></span><span class="hpr">${e.r} → ${e.R}</span><span></span>
+      <em class="${e.d > 0 ? 'up' : e.d < 0 ? 'down' : ''}">${T.signed(e.d)}</em></div>`);
+    row.querySelector('.hbook').textContent = T.t('histRatingSet');
     return row;
   }
 

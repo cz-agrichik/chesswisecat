@@ -514,6 +514,9 @@ h1, h2, h3 { margin: 0; line-height: 1.15; }
 .opres > div { display: flex; justify-content: space-between; gap: 10px; }
 .opres .sub { color: var(--muted); }
 .opres .tot { font-size: 1.2rem; font-weight: 800; border-top: 2px dashed var(--grey); padding-top: 6px; }
+.fieldhint { display: block; margin-top: 4px; font-weight: 600; font-size: .85rem; }
+.hrow.rset .hicon { font-style: normal; font-size: 1rem; line-height: 1; }
+.hrow.rset .hbook { font-style: italic; }
 .hrow.op .hicon { font-style: normal; font-size: 1rem; line-height: 1; }
 .hrow .hpts { grid-column: span 2; font-weight: 800; white-space: nowrap; text-align: right; }
 @media (max-width: 420px) { .hearts.lives5 svg { width: 19px; height: 19px; } .hearts.lives5 { gap: 1px; } }

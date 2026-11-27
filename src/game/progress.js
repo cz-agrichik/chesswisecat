@@ -12,7 +12,8 @@ const Progress = (function () {
   const validAvatar = a => AVATARS.includes(a) || LEGACY_AVATARS.includes(a);
   const SCHEMA = 2;
   const NAME_MAX = 14;
-  const HISTORY_MAX = 400;   // last puzzles kept per player for the history screen
+  const HISTORY_MAX = 400;
+  const RATING_MAX = 3000;   // a rating set by hand: 0 … RATING_MAX   // last puzzles kept per player for the history screen
   const S = { players: [], currentId: null, muted: !CONFIG.soundOnByDefault, lang: 'en', deleted: {} };
   const listeners = new Set();
   const changed = () => listeners.forEach(fn => fn());
@@ -56,13 +57,15 @@ const Progress = (function () {
     return p;
   }
   /** One history entry: t time (ms), id puzzle, v book id, r puzzle rating, s points (2 clean / 1 mistakes / 0 arrows),
-      d rating change, R rating after. Newest first. An opening run: k 'o', id the opening, s its points. */
+      d rating change, R rating after. Newest first. An opening run: k 'o', id the opening, s its points.
+      A rating set by hand: k 'r', id 'set', r the rating before, d the change, R the new rating. */
   function cleanEntry(e) {
     if (!e || typeof e !== 'object' || typeof e.id !== 'string') return null;
-    const o = e.k === 'o';   // an opening run: s = points earned (up to 13), not 0..2
+    const o = e.k === 'o';   // an opening run: s = points earned, not 0..2
     const out = { t: int(e.t), id: e.id.slice(0, 40), v: String(e.v || '').slice(0, 40), r: int(e.r), s: Math.min(o ? 99 : 2, int(e.s)),
       d: Number.isFinite(+e.d) ? Math.round(+e.d) : 0, R: int(e.R) };
     if (o) out.k = 'o';
+    if (e.k === 'r') { out.k = 'r'; out.s = 0; }
     return out;
   }
 
@@ -90,12 +93,14 @@ const Progress = (function () {
   function ensureCurrent() { if (!S.players.find(p => p.id === S.currentId)) S.currentId = S.players[0] ? S.players[0].id : null; }
   const current = () => S.players.find(p => p.id === S.currentId) || null;
   function setCurrent(id) { S.currentId = id; const p = current(); if (p) S.lang = p.lang; save(); }
-  function addPlayer(name, avatarIdx, pauseSec, lang, gender) {
+  const cleanRating = x => Math.min(RATING_MAX, int(x, CONFIG.rating.floor));
+  function addPlayer(name, avatarIdx, pauseSec, lang, gender, rating) {
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const p = fresh(id, cleanName(name) || Texts.avName(avatarIdx), AVATARS[avatarIdx]);
     if (pauseSec !== undefined) p.pauseSec = Math.min(30, int(pauseSec));
     if (Texts.isLang(lang)) p.lang = S.lang = lang;
     if (Texts.isGender(gender)) p.gender = gender;
+    if (rating !== undefined && rating !== '' && Number.isFinite(+rating)) p.rating = p.bestRating = cleanRating(rating);
     p.synced = false;
     S.players.push(p); S.currentId = p.id; save(); Cloud.push(p, 50);
     return p;
@@ -122,6 +127,19 @@ const Progress = (function () {
     ensureCurrent(); if (current()) S.lang = current().lang;
     save(); changed();
     Cloud.markDeleted(id);
+    return true;
+  }
+  /** Set the rating by hand (a grown-up, in the player's settings). It goes to the history
+      as its own row; the best rating follows it up; the current lesson's start moves by
+      the same amount, so the lesson still shows only what was won in play. */
+  function setRating(p, rating) {
+    const R = cleanRating(rating), before = p.rating;
+    if (R === before) return false;
+    p.rating = R; p.bestRating = Math.max(p.bestRating, R);
+    if (p.lesson) p.lesson.r0 = Math.max(0, p.lesson.r0 + R - before);
+    p.history.unshift({ t: Date.now(), id: 'set', v: '', r: before, s: 0, d: R - before, R, k: 'r' });
+    if (p.history.length > HISTORY_MAX) p.history.length = HISTORY_MAX;
+    touch(p);
     return true;
   }
   function touch(p) { p.updatedAt = Date.now(); p.synced = false; save(); Cloud.push(p); }
@@ -207,7 +225,7 @@ const Progress = (function () {
   }
 
   return {
-    AVATARS, NAME_MAX, HISTORY_MAX, state: S, load, save, current, setCurrent, addPlayer, updatePlayer, removePlayer, setMuted,
+    AVATARS, NAME_MAX, HISTORY_MAX, RATING_MAX, state: S, load, save, current, setCurrent, addPlayer, updatePlayer, setRating, removePlayer, setMuted,
     record, recordOpening, openingWindow, pointsFor, expected, lessonOf, volumeStats,
     initCloud: () => Cloud.init(), markBusy: (id, on) => Cloud.markBusy(id, on),
     onChange: fn => listeners.add(fn),
